@@ -34,7 +34,9 @@ func usage() {
 }
 
 func main() {
-	http.Handle("/suggest", http.HandlerFunc(indexHandler))
+	flag.Usage = usage
+	flag.Parse()
+
 	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
 	if err := http.ListenAndServe(*httpAddr, nil); err != nil {
 		log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
