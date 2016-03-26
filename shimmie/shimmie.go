@@ -52,7 +52,7 @@ func Auth(ctx context.Context, h http.HandlerFunc, redirectURL string) http.Hand
 			return
 		}
 		passwordHash := user.Pass
-		userIP := strings.Split(r.RemoteAddr, ":")[0]
+		userIP := getOriginalIP(r)
 		sessionCookieValue := CookieValue(passwordHash, userIP)
 		if sessionCookieValue != sessionCookie.Value {
 			http.Redirect(w, r, redirectURL, http.StatusFound)
@@ -60,6 +60,16 @@ func Auth(ctx context.Context, h http.HandlerFunc, redirectURL string) http.Hand
 		}
 		h.ServeHTTP(w, r)
 	}
+}
+
+func getOriginalIP(r *http.Request) string {
+	x := r.Header.Get("X-Forwarded-For")
+	if x != "" && strings.Contains(r.RemoteAddr, "127.0.0.1") {
+		// format is comma separated
+		return strings.Split(x, ",")[0]
+	}
+	// it also contains the port
+	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
 // CookieValue recreates the Shimmie session cookie value based on the user
