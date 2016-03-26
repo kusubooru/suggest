@@ -22,6 +22,7 @@ var (
 	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
 	dbDriver = flag.String("driver", "mysql", "Database driver")
 	dbConfig = flag.String("config", "", "username:password@(host:port)/database?parseTime=true")
+	loginURL = flag.String("loginurl", "/suggest/login", "Login URL path to redirect to")
 	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
 	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
 	// Set after flag parsing based on certFile & keyFile.
@@ -56,7 +57,7 @@ func main() {
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
 
-	http.Handle("/suggest", shimmie.Auth(ctx, indexHandler, "/suggest/login"))
+	http.Handle("/suggest", shimmie.Auth(ctx, indexHandler, *loginURL))
 	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
