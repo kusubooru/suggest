@@ -37,6 +37,11 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 
+	// create database connection and store
+	s := datastore.New(*dbDriver, *dbConfig)
+	// add store to context
+	ctx := store.NewContext(context.Background(), s)
+
 	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
 	if err := http.ListenAndServe(*httpAddr, nil); err != nil {
 		log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
