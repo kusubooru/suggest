@@ -11,6 +11,8 @@ import (
 
 var (
 	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
+	dbDriver = flag.String("driver", "mysql", "Database driver")
+	dbConfig = flag.String("config", "", "username:password@(host:port)/database?parseTime=true")
 )
 
 type Suggestion struct {
