@@ -42,14 +42,59 @@ func main() {
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
 
+	http.Handle("/suggest", shimmie.Auth(ctx, indexHandler, "/suggest/login"))
 	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
+	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
+	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
+	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
+
 	if err := http.ListenAndServe(*httpAddr, nil); err != nil {
 		log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
 	}
 }
 
+type ctxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
+
+func newHandler(ctx context.Context, fn ctxHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fn(ctx, w, r)
+	}
+}
+
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	render(w, suggestionTmpl, nil)
+}
+
+func serveLogin(w http.ResponseWriter, r *http.Request) {
+	render(w, loginTmpl, nil)
+}
+
+func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	user, err := store.GetUser(ctx, username)
+	if err != nil {
+		log.Println(err)
+		render(w, loginTmpl, "User does not exist")
+		return
+	}
+	hash := md5.Sum([]byte(username + password))
+	passwordHash := fmt.Sprintf("%x", hash)
+	if user.Pass != passwordHash {
+		render(w, loginTmpl, "Username and password do not match")
+		return
+	}
+	addr := strings.Split(r.RemoteAddr, ":")[0]
+	cookieValue := shimmie.CookieValue(passwordHash, addr)
+	shimmie.SetCookie(w, "shm_username", username)
+	shimmie.SetCookie(w, "shm_session", cookieValue)
+	http.Redirect(w, r, "/suggest", http.StatusFound)
+}
+
+func handleLogout(w http.ResponseWriter, r *http.Request) {
+	shimmie.SetCookie(w, "shm_username", "")
+	shimmie.SetCookie(w, "shm_session", "")
+	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
 func submitHandler(w http.ResponseWriter, r *http.Request) {
