@@ -1,12 +1,21 @@
 package main
 
 import (
+	"crypto/md5"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/net/context"
+
+	"github.com/kusubooru/teian/shimmie"
+	"github.com/kusubooru/teian/store"
+	"github.com/kusubooru/teian/store/datastore"
 )
 
 var (
@@ -116,11 +125,13 @@ func render(w http.ResponseWriter, t *template.Template, data interface{}) {
 }
 
 var (
-	baseTmpl       = template.Must(template.New("baseTmpl").Parse(baseTemplate))
-	suggestionTmpl = template.Must(template.Must(baseTmpl.Clone()).Parse(suggestionTemplate))
-	submitTmpl     = template.Must(template.Must(baseTmpl.Clone()).Parse(submitTemplate))
-	listTmpl       = template.Must(template.Must(baseTmpl.Clone()).Parse(listTemplate))
+	suggestionTmpl = template.Must(template.New("").Parse(baseTemplate + suggestionTemplate + logoutTemplate))
+	submitTmpl     = template.Must(template.New("").Parse(baseTemplate + submitTemplate + logoutTemplate))
+	listTmpl       = template.Must(template.New("").Parse(baseTemplate + listTemplate + logoutTemplate))
+	loginTmpl      = template.Must(template.New("").Parse(baseTemplate + loginTemplate))
+)
 
+const (
 	baseTemplate = `
 <!DOCTYPE html>
 <html lang="en">
@@ -138,6 +149,13 @@ var (
 </body>
 </html>
 `
+	logoutTemplate = `
+{{define "logout"}}
+<form method="post" action="/suggest/logout">
+     <button type="submit">Logout</button>
+</form>
+{{end}}
+`
 	suggestionTemplate = `
 {{define "content"}}
 <form method="post" action="/suggest/submit">
@@ -145,16 +163,35 @@ var (
 	<textarea id="text" class="large" rows="20" cols="80" name="text"></textarea>
 	<input type="submit">
 </form>
+{{block "logout" .}}{{end}}
 {{end}}
 `
 	submitTemplate = `
 {{define "content"}}
 Your suggestion has been submitted. Thank you for your feedback.
+{{block "logout" .}}{{end}}
 {{end}}
 `
 	listTemplate = `
 {{define "content"}}
 list placeholder	
+{{block "logout" .}}{{end}}
+{{end}}
+`
+
+	loginTemplate = `
+{{define "content"}}
+<h1>Login</h1>
+<form method="post" action="/suggest/login/submit">
+    <label for="username">User name</label>
+    <input type="text" id="username" name="username">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password">
+    <button type="submit">Login</button>
+</form>
+{{if .}}
+<em>{{.}}</em>
+{{end}}
 {{end}}
 `
 )
