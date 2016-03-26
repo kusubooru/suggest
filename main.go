@@ -22,6 +22,10 @@ var (
 	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
 	dbDriver = flag.String("driver", "mysql", "Database driver")
 	dbConfig = flag.String("config", "", "username:password@(host:port)/database?parseTime=true")
+	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
+	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
+	// Set after flag parsing based on certFile & keyFile.
+	useTLS bool
 )
 
 type Suggestion struct {
@@ -45,6 +49,7 @@ func usage() {
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+	useTLS = *certFile != "" && *keyFile != ""
 
 	// create database connection and store
 	s := datastore.New(*dbDriver, *dbConfig)
@@ -57,8 +62,14 @@ func main() {
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
 
-	if err := http.ListenAndServe(*httpAddr, nil); err != nil {
-		log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
+	if useTLS {
+		if err := http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, nil); err != nil {
+			log.Fatalf("Could not start listening (TLS) on %v: %v", *httpAddr, err)
+		}
+	} else {
+		if err := http.ListenAndServe(*httpAddr, nil); err != nil {
+			log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
+		}
 	}
 }
 
