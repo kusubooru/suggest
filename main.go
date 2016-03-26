@@ -22,6 +22,17 @@ type Suggestion struct {
 	Created  time.Time
 }
 
+const description = `Usage: teian [options]
+  A service that allows users to submit suggestions.
+Options:
+`
+
+func usage() {
+	fmt.Fprintf(os.Stderr, description)
+	flag.PrintDefaults()
+	fmt.Fprintf(os.Stderr, "\n")
+}
+
 func main() {
 	http.Handle("/suggest", http.HandlerFunc(indexHandler))
 	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
