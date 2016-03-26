@@ -10,4 +10,5 @@ type User struct {
 	JoinDate *time.Time
 	Admin    string
 	Email    string
+	Class    string
 }

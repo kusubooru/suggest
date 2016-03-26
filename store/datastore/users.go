@@ -19,6 +19,7 @@ func (db *datastore) GetUser(username string) (*teian.User, error) {
 		&u.JoinDate,
 		&u.Admin,
 		&email,
+		&u.Class,
 	)
 	if err != nil {
 		return nil, err
