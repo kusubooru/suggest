@@ -20,7 +20,7 @@ func Hash(s string) string {
 }
 
 // Auth is a handler wrapper that checks if a user is authenticated to Shimmie.
-// It checks for two cookies "shm_username" and "shm_session". The first
+// It checks for two cookies "shm_user" and "shm_session". The first
 // contains the username which is used to query the database and the get user's
 // password hash. Then it attempts to recreate the "shm_session" cookie value
 // by using the username, user IP and password hash. If the recreated value
@@ -33,9 +33,9 @@ func Auth(ctx context.Context, h http.HandlerFunc, redirectURL string) http.Hand
 		if redirectURL == "" {
 			redirectURL = defaultLoginURL
 		}
-		usernameCookie, err := r.Cookie("shm_username")
+		usernameCookie, err := r.Cookie("shm_user")
 		if err != nil || usernameCookie.Value == "" {
-			log.Print("no username cookie or empty")
+			log.Print("no user cookie is set or it is empty")
 			http.Redirect(w, r, redirectURL, http.StatusFound)
 			return
 		}

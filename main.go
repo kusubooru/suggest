@@ -107,13 +107,13 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	}
 	addr := strings.Split(r.RemoteAddr, ":")[0]
 	cookieValue := shimmie.CookieValue(passwordHash, addr)
-	shimmie.SetCookie(w, "shm_username", username)
+	shimmie.SetCookie(w, "shm_user", username)
 	shimmie.SetCookie(w, "shm_session", cookieValue)
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
-	shimmie.SetCookie(w, "shm_username", "")
+	shimmie.SetCookie(w, "shm_user", "")
 	shimmie.SetCookie(w, "shm_session", "")
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
