@@ -24,6 +24,17 @@ func New(driver, config, boltFile string) store.Store {
 	return &datastore{db, boltdb}
 }
 
+func (db *datastore) Close() {
+	if err := db.DB.Close(); err != nil {
+		log.Print(err)
+		log.Fatalln("database close failed")
+	}
+	if err := db.boltdb.Close(); err != nil {
+		log.Print(err)
+		log.Fatalln("bolt close failed")
+	}
+}
+
 func OpenBolt(file string) *bolt.DB {
 	db, err := bolt.Open(file, 0600, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -47,6 +48,7 @@ func main() {
 
 	// create database connection and store
 	s := datastore.New(*dbDriver, *dbConfig, *boltFile)
+	closeStoreOnSignal(s)
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
 
@@ -65,6 +67,18 @@ func main() {
 			log.Fatalf("Could not start listening on %v: %v", *httpAddr, err)
 		}
 	}
+}
+
+func closeStoreOnSignal(s store.Store) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill)
+	go func() {
+		for sig := range c {
+			log.Printf("%v signal received, releasing database resources and exiting...", sig)
+			s.Close()
+			os.Exit(1)
+		}
+	}()
 }
 
 type ctxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)

@@ -19,6 +19,8 @@ type Store interface {
 	// GetSugg gets all the suggestions.
 	GetAllSugg() ([]teian.Sugg, error)
 
+	// Close releases all database resources.
+	Close()
 }
 
 // GetUser gets a user by unique username.
