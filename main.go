@@ -219,8 +219,8 @@ const (
 	suggestionTemplate = `
 {{define "content"}}
 <form method="post" action="/suggest/submit">
-	<label for="text">Enter your suggestion</label>
-	<textarea id="text" class="large" rows="20" cols="80" name="text"></textarea>
+	<label for="text">Write your suggestion</label>
+	<textarea id="text" class="large" rows="20" cols="80" name="text" placeholder="Write your suggestion here."></textarea>
 	<input type="submit">
 </form>
 {{block "logout" .}}{{end}}
