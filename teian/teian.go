@@ -20,3 +20,7 @@ type Sugg struct {
 	Text     string
 	Created  time.Time
 }
+
+func (s *Sugg) FmtCreated() string {
+	return s.Created.UTC().Format("Mon 02 Jan 2006 15:04:05 MST")
+}

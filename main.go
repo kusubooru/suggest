@@ -243,7 +243,10 @@ const (
 	listTemplate = `
 {{define "content"}}
 {{ range $k, $v := . }}
-   <li><strong>{{ $v.Username }}</strong>: {{ $v.Text }}</li>
+	<div class="suggestion">
+		<span>{{$v.FmtCreated}} by <a href="https://kusubooru.com/user/{{$v.Username}}">{{$v.Username}}</a></span>
+		<textarea cols="80" readonly>{{$v.Text}}</textarea>
+	</div>
 {{ end }}
 {{block "logout" .}}{{end}}
 {{end}}
