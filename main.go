@@ -29,13 +29,6 @@ var (
 	useTLS bool
 )
 
-type Suggestion struct {
-	ID       int64
-	Username string
-	Text     string
-	Created  time.Time
-}
-
 const description = `Usage: teian [options]
   A service that allows users to submit suggestions.
 Options:

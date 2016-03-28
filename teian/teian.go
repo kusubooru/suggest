@@ -12,3 +12,11 @@ type User struct {
 	Email    string
 	Class    string
 }
+
+// Sugg represents a suggestion that a user can create.
+type Sugg struct {
+	ID       int64
+	Username string
+	Text     string
+	Created  time.Time
+}
