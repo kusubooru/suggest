@@ -50,7 +50,7 @@ func GetSugg(ctx context.Context, username string) ([]teian.Sugg, error) {
 	return s.GetSugg(username)
 }
 
-// GetSugg gets all the suggestions.
+// GetAllSugg gets all the suggestions.
 func GetAllSugg(ctx context.Context) ([]teian.Sugg, error) {
 	s, ok := FromContext(ctx)
 	if !ok {

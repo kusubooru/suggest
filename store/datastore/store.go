@@ -18,11 +18,12 @@ type datastore struct {
 	boltdb *bolt.DB
 }
 
-// New creates a database connection for the given driver and configuration and
-// returns a new Store.
-func New(driver, config, boltFile string) store.Store {
-	db := Open(driver, config)
-	boltdb := OpenBolt(boltFile)
+// Open creates a database connection for the given driver and configuration,
+// opens the bolt database file and returns a new Store. The bolt database file
+// will be created if it does not exist.
+func Open(driver, config, boltFile string) store.Store {
+	db := openDB(driver, config)
+	boltdb := openBolt(boltFile)
 	return &datastore{db, boltdb}
 }
 
@@ -37,14 +38,17 @@ func (db *datastore) Close() {
 	}
 }
 
-func OpenBolt(file string) *bolt.DB {
+// openBolt creates and opens a bolt database at the given path. If the file does
+// not exist then it will be created automatically. After opening it creates
+// all the needed buckets.
+func openBolt(file string) *bolt.DB {
 	db, err := bolt.Open(file, 0600, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {
 		log.Print(err)
 		log.Fatalln("bolt open failed")
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucketIfNotExists([]byte(suggsBucket)); err != nil {
+		if _, err = tx.CreateBucketIfNotExists([]byte(suggsBucket)); err != nil {
 			return err
 		}
 		return nil
@@ -56,9 +60,9 @@ func OpenBolt(file string) *bolt.DB {
 	return db
 }
 
-// Open opens a new database connection with the specified driver and
+// openDB opens a new database connection with the specified driver and
 // connection string.
-func Open(driver, config string) *sql.DB {
+func openDB(driver, config string) *sql.DB {
 	db, err := sql.Open(driver, config)
 	if err != nil {
 		log.Print(err)

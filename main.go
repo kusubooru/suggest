@@ -47,7 +47,7 @@ func main() {
 	useTLS = *certFile != "" && *keyFile != ""
 
 	// create database connection and store
-	s := datastore.New(*dbDriver, *dbConfig, *boltFile)
+	s := datastore.Open(*dbDriver, *dbConfig, *boltFile)
 	closeStoreOnSignal(s)
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
