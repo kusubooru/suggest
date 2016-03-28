@@ -199,9 +199,53 @@ const (
 	<meta charset="UTF-8">
 	<title>suggest</title>
 	<style>
-		label, textarea, input {
-			display: block;
+		* {
+			font-size: 16px; 
+			line-height: 1.2;
+			font-family: Verdana, Geneva, sans-serif;
 		}
+		a:link {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		a:visited {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		a:hover {
+			color:#33CFFF;
+			text-decoration:none;
+		}
+		a:active {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		body {
+			list-style-type: none;
+		}
+
+		p, a, span {font-size: 120%;}
+
+
+		label, textarea, input, button {
+			display: block;
+			font-size: 120%;
+			line-height:1.2;
+		}
+
+		.suggestion {
+			border-left: 1em #006FFA solid;
+			border-top: 1px #ebebeb solid;
+			border-bottom: 1px #ebebeb solid;
+			padding: 0.5em;
+			border-top-left-radius: 1em;
+			border-bottom-left-radius: 1em;
+			line-height: 200%;
+		}
+		.suggestion:nth-of-type(even) {
+		    background: #f6f6f6;
+		}
+
 	</style>
 </head>
 <body>
