@@ -54,6 +54,7 @@ func main() {
 	ctx := store.NewContext(context.Background(), s)
 
 	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
+	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
 	http.Handle("/suggest/submit", newHandler(ctx, submitHandler))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
@@ -96,6 +97,23 @@ func serveIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 func serveLogin(w http.ResponseWriter, r *http.Request) {
 	render(w, loginTmpl, nil)
+}
+
+func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	u, ok := ctx.Value("user").(*teian.User)
+	if !ok {
+		http.Redirect(w, r, *loginURL, http.StatusFound)
+		return
+	}
+	if u.Admin != "Y" {
+		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
+		return
+	}
+	suggs, err := store.GetAllSugg(ctx)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+	}
+	render(w, listTmpl, suggs)
 }
 
 func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -224,7 +242,9 @@ const (
 `
 	listTemplate = `
 {{define "content"}}
-list placeholder	
+{{ range $k, $v := . }}
+   <li><strong>{{ $v.Username }}</strong>: {{ $v.Text }}</li>
+{{ end }}
 {{block "logout" .}}{{end}}
 {{end}}
 `
