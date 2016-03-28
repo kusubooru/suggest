@@ -16,6 +16,7 @@ import (
 	"github.com/kusubooru/teian/shimmie"
 	"github.com/kusubooru/teian/store"
 	"github.com/kusubooru/teian/store/datastore"
+	"github.com/kusubooru/teian/teian"
 )
 
 var (
@@ -53,7 +54,7 @@ func main() {
 	ctx := store.NewContext(context.Background(), s)
 
 	http.Handle("/suggest", shimmie.Auth(ctx, indexHandler, *loginURL))
-	http.Handle("/suggest/submit", http.HandlerFunc(submitHandler))
+	http.Handle("/suggest/submit", newHandler(ctx, submitHandler))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
@@ -125,14 +126,36 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
-func submitHandler(w http.ResponseWriter, r *http.Request) {
+func submitHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	text := r.PostFormValue("text")
+	// redirect if suggestion text is empty
 	if len(strings.TrimSpace(text)) == 0 {
 		http.Redirect(w, r, "/suggest", http.StatusFound)
 		return
 	}
-	// store suggestion here
-	render(w, submitTmpl, nil)
+
+	// get user cookie to find out username
+	userCookie, err := r.Cookie("shm_user")
+	if err != nil || userCookie.Value == "" {
+		log.Print("empty or no user cookie found when submiting suggestion")
+		http.Redirect(w, r, *loginURL, http.StatusFound)
+		return
+	}
+
+	type result struct {
+		Err error
+		Msg string
+	}
+
+	// create and store suggestion
+	username := userCookie.Value
+	err = store.CreateSugg(ctx, username, &teian.Sugg{Text: text})
+	if err != nil {
+		render(w, submitTmpl, result{Err: err, Msg: "Error: Something broke :'( Our developers were notified. Sorry!"})
+	}
+
+	render(w, submitTmpl, result{Msg: "Success: Your suggestion has been submitted. Thank you for your feedback!"})
+
 }
 
 func render(w http.ResponseWriter, t *template.Template, data interface{}) {
@@ -187,7 +210,15 @@ const (
 `
 	submitTemplate = `
 {{define "content"}}
-Your suggestion has been submitted. Thank you for your feedback.
+{{ if .Err }}
+<!-- Error -->
+<!-- .Err  -->
+<!----------->
+{{end}}
+{{ if .Msg }}
+<em>{{.Msg}}</em>
+{{end}}
+<a href="/suggest">New suggetion</a>
 {{block "logout" .}}{{end}}
 {{end}}
 `
