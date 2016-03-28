@@ -53,7 +53,7 @@ func main() {
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
 
-	http.Handle("/suggest", shimmie.Auth(ctx, indexHandler, *loginURL))
+	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
 	http.Handle("/suggest/submit", newHandler(ctx, submitHandler))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
@@ -90,7 +90,7 @@ func newHandler(ctx context.Context, fn ctxHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+func serveIndex(w http.ResponseWriter, r *http.Request) {
 	render(w, suggestionTmpl, nil)
 }
 
