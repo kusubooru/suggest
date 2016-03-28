@@ -11,6 +11,8 @@ import (
 	"github.com/kusubooru/teian/store"
 )
 
+const suggsBucket = "suggestions"
+
 type datastore struct {
 	*sql.DB
 	boltdb *bolt.DB
@@ -40,6 +42,16 @@ func OpenBolt(file string) *bolt.DB {
 	if err != nil {
 		log.Print(err)
 		log.Fatalln("bolt open failed")
+	}
+	err = db.Update(func(tx *bolt.Tx) error {
+		if _, err := tx.CreateBucketIfNotExists([]byte(suggsBucket)); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		log.Print(err)
+		log.Fatalln("bolt bucket creation failed")
 	}
 	return db
 }

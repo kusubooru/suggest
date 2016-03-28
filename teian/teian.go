@@ -15,7 +15,7 @@ type User struct {
 
 // Sugg represents a suggestion that a user can create.
 type Sugg struct {
-	ID       int64
+	ID       uint64
 	Username string
 	Text     string
 	Created  time.Time
