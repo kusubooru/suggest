@@ -76,7 +76,7 @@ func (db *datastore) GetAllSugg() ([]teian.Sugg, error) {
 			var userSuggs []teian.Sugg
 			buf.Reset()
 			buf.Write(v)
-			if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
+			if err := gob.NewDecoder(&buf).Decode(&userSuggs); err != nil {
 				return fmt.Errorf("could not decode suggestions of %q: %v", k, err)
 			}
 			for _, sugg := range userSuggs {
