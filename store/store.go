@@ -11,6 +11,14 @@ import (
 type Store interface {
 	// GetUser gets a user by unique username.
 	GetUser(username string) (*teian.User, error)
+
+	// CreateSugg creates a new suggestion for a user.
+	CreateSugg(username string, sugg *teian.Sugg) error
+	// GetSugg gets all the suggestions created by a user.
+	GetSugg(username string) ([]teian.Sugg, error)
+	// GetSugg gets all the suggestions.
+	GetAllSugg() ([]teian.Sugg, error)
+
 }
 
 // GetUser gets a user by unique username.
@@ -20,6 +28,33 @@ func GetUser(ctx context.Context, username string) (*teian.User, error) {
 		return nil, errors.New("no store in context")
 	}
 	return s.GetUser(username)
+}
+
+// CreateSugg creates a new suggestion.
+func CreateSugg(ctx context.Context, username string, sugg *teian.Sugg) error {
+	s, ok := FromContext(ctx)
+	if !ok {
+		return errors.New("no store in context")
+	}
+	return s.CreateSugg(username, sugg)
+}
+
+// GetSugg gets all the suggestions created by a user.
+func GetSugg(ctx context.Context, username string) ([]teian.Sugg, error) {
+	s, ok := FromContext(ctx)
+	if !ok {
+		return nil, errors.New("no store in context")
+	}
+	return s.GetSugg(username)
+}
+
+// GetSugg gets all the suggestions.
+func GetAllSugg(ctx context.Context) ([]teian.Sugg, error) {
+	s, ok := FromContext(ctx)
+	if !ok {
+		return nil, errors.New("no store in context")
+	}
+	return s.GetAllSugg()
 }
 
 const key = "store"

@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/boltdb/bolt"
 	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kusubooru/teian/store"
@@ -12,13 +13,24 @@ import (
 
 type datastore struct {
 	*sql.DB
+	boltdb *bolt.DB
 }
 
 // New creates a database connection for the given driver and configuration and
 // returns a new Store.
-func New(driver, config string) store.Store {
+func New(driver, config, boltFile string) store.Store {
 	db := Open(driver, config)
-	return &datastore{db}
+	boltdb := OpenBolt(boltFile)
+	return &datastore{db, boltdb}
+}
+
+func OpenBolt(file string) *bolt.DB {
+	db, err := bolt.Open(file, 0600, &bolt.Options{Timeout: 5 * time.Second})
+	if err != nil {
+		log.Print(err)
+		log.Fatalln("bolt open failed")
+	}
+	return db
 }
 
 // Open opens a new database connection with the specified driver and

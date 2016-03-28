@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"golang.org/x/net/context"
 
@@ -22,6 +21,7 @@ var (
 	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
 	dbDriver = flag.String("driver", "mysql", "Database driver")
 	dbConfig = flag.String("config", "", "username:password@(host:port)/database?parseTime=true")
+	boltFile = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
 	loginURL = flag.String("loginurl", "/suggest/login", "Login URL path to redirect to")
 	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
 	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
@@ -46,7 +46,7 @@ func main() {
 	useTLS = *certFile != "" && *keyFile != ""
 
 	// create database connection and store
-	s := datastore.New(*dbDriver, *dbConfig)
+	s := datastore.New(*dbDriver, *dbConfig, *boltFile)
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
 
