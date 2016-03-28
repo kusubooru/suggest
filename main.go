@@ -90,7 +90,7 @@ func newHandler(ctx context.Context, fn ctxHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func serveIndex(w http.ResponseWriter, r *http.Request) {
+func serveIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	render(w, suggestionTmpl, nil)
 }
 

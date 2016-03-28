@@ -27,7 +27,7 @@ func Hash(s string) string {
 // does not match the "shm_session" cookie value then it redirects to
 // redirectPath. If redirectURL is empty then "/user_admin/login" is used
 // instead which is the default login URL for Shimmie.
-func Auth(ctx context.Context, h http.HandlerFunc, redirectURL string) http.HandlerFunc {
+func Auth(ctx context.Context, fn func(context.Context, http.ResponseWriter, *http.Request), redirectURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		const defaultLoginURL = "/user_admin/login"
 		if redirectURL == "" {
@@ -58,7 +58,8 @@ func Auth(ctx context.Context, h http.HandlerFunc, redirectURL string) http.Hand
 			http.Redirect(w, r, redirectURL, http.StatusFound)
 			return
 		}
-		h.ServeHTTP(w, r)
+		ctx = context.WithValue(ctx, "user", user)
+		fn(ctx, w, r)
 	}
 }
 
