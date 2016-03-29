@@ -188,7 +188,7 @@ func render(w http.ResponseWriter, t *template.Template, data interface{}) {
 var (
 	suggestionTmpl = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + suggestionTemplate))
 	submitTmpl     = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + submitTemplate))
-	listTmpl       = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + listTemplate))
+	listTmpl       = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + toolbarTemplate + listTemplate))
 	loginTmpl      = template.Must(template.New("").Parse(baseTemplate + loginTemplate))
 )
 
@@ -204,9 +204,6 @@ const (
 			font-size: 16px; 
 			line-height: 1.2;
 			font-family: Verdana, Geneva, sans-serif;
-			/*margin:0; 
-			padding:0;
-			border:0;*/
 		}
 		a:link {
 			color:#006FFA;
@@ -283,22 +280,14 @@ const (
 			text-decoration:none;
 		}
 
-		label, textarea, input, button {
+		#login-form label, #login-form input, #login-form button {
+			padding: 0.5em;
 			display: block;
 			font-size: 120%;
 			line-height:1.2;
 		}
 
-		#login-form label {
-			padding: 0.5em;
-		}
-
-		#login-form input {
-			padding: 0.5em;
-		}
-
 		#login-form button {
-			padding: 0.5em;
 			margin-top: 0.5em;
 		}
 
@@ -307,14 +296,27 @@ const (
 			font-size: 120%;
 		}
 
+		.toolbar {
+			padding: 0.5em;
+		}
+		.toolbar input, .toolbar button {
+			font-size: 120%;
+		}
+
 		.suggestion {
-			border-left: 1em #006FFA solid;
+			padding: 0.5em;
 			border-top: 1px #ebebeb solid;
 			border-bottom: 1px #ebebeb solid;
-			padding: 0.5em;
-			border-top-left-radius: 1em;
-			border-bottom-left-radius: 1em;
+			border-left: 0.3em #006FFA solid;
+			border-top-left-radius: 0.3em;
+			border-bottom-left-radius: 0.3em;
 			line-height: 200%;
+		}
+
+		.suggestion textarea {
+			display: block;
+			font-size: 120%;
+			line-height:1.2;
 		}
 		.suggestion:nth-of-type(even) {
 		    background: #f6f6f6;
@@ -337,6 +339,7 @@ const (
 		.suggestion-form input[type=submit] {
 			padding: 0.5em;
 			margin-top: 0.5em;
+			display: block;
 		}
 
 		.alert {
@@ -356,8 +359,6 @@ const (
 				padding-left:5%;
 				padding-right:5%;
 			}
-			.alert strong {
-			}
 		}
 
 		.alert-success {
@@ -373,14 +374,26 @@ const (
 		}
 
 
+
 	</style>
 </head>
 <body>
 	<h1 id="site-title"><a href="/post/list">Kusubooru</a></h1>
 	{{block "subnav" .}}{{end}}
+	{{block "toolbar" .}}{{end}}
 	{{block "content" .}}{{end}}
 </body>
 </html>
+`
+	toolbarTemplate = `
+{{define "toolbar"}}
+<div class="toolbar">
+	<form method="get" action="/suggest/admin">
+		<input type="text" placeholder="User">
+	    <button>Search</button>
+	</form>
+</div>
+{{end}}
 `
 	subnavTemplate = `
 {{define "subnav"}}
