@@ -220,12 +220,20 @@ const (
 			color:#006FFA;
 			text-decoration:none;
 		}
-		body {
-			list-style-type: none;
-		}
 
 		p, a, span {font-size: 120%;}
 
+		body {
+			list-style-type: none;
+			padding-top: 0;
+			margin-top: 0;
+		}
+
+		#site-title {
+			font-size: 133%;
+			padding: 10px 12px 0;
+			margin: 0;
+		}
 
 		label, textarea, input, button {
 			display: block;
@@ -249,6 +257,7 @@ const (
 	</style>
 </head>
 <body>
+	<h1 id="site-title"><a href="/post/list">Kusubooru</a></h1>
 	{{block "content" .}}{{end}}
 </body>
 </html>
@@ -288,7 +297,7 @@ const (
 {{define "content"}}
 {{ range $k, $v := . }}
 	<div class="suggestion">
-		<span>{{$v.FmtCreated}} by <a href="https://kusubooru.com/user/{{$v.Username}}">{{$v.Username}}</a></span>
+		<span>{{$v.FmtCreated}} by <a href="/user/{{$v.Username}}">{{$v.Username}}</a></span>
 		<textarea cols="80" readonly>{{$v.Text}}</textarea>
 	</div>
 {{ end }}
