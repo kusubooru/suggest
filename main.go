@@ -24,8 +24,8 @@ import (
 
 var (
 	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
-	dbDriver = flag.String("driver", "mysql", "Database driver")
-	dbConfig = flag.String("config", "", "username:password@(host:port)/database?parseTime=true")
+	dbDriver = flag.String("dbdriver", "mysql", "Database driver")
+	dbConfig = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
 	boltFile = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
 	loginURL = flag.String("loginurl", "/suggest/login", "Login URL path to redirect to")
 	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
