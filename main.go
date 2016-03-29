@@ -58,7 +58,7 @@ func main() {
 	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
 	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
 	http.Handle("/suggest/admin/delete", shimmie.Auth(ctx, handleDelete, *loginURL))
-	http.Handle("/suggest/submit", newHandler(ctx, submitHandler))
+	http.Handle("/suggest/submit", newHandler(ctx, handleSubmit))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
@@ -178,6 +178,10 @@ func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
 	user, err := store.GetUser(ctx, username)
@@ -205,7 +209,11 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
-func submitHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
 	text := r.PostFormValue("text")
 	// redirect if suggestion text is empty
 	if len(strings.TrimSpace(text)) == 0 {
