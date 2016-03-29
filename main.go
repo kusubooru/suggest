@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"flag"
 	"fmt"
 	"html/template"
@@ -188,14 +189,18 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	password := r.PostFormValue("password")
 	user, err := store.GetUser(ctx, username)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			render(w, loginTmpl, "User does not exist.")
+			return
+		}
 		log.Println(err)
-		render(w, loginTmpl, "User does not exist")
+		http.Error(w, fmt.Sprintf("get user %q failed: %v", username, err.Error()), http.StatusInternalServerError)
 		return
 	}
 	hash := md5.Sum([]byte(username + password))
 	passwordHash := fmt.Sprintf("%x", hash)
 	if user.Pass != passwordHash {
-		render(w, loginTmpl, "Username and password do not match")
+		render(w, loginTmpl, "Username and password do not match.")
 		return
 	}
 	addr := strings.Split(r.RemoteAddr, ":")[0]
