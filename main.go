@@ -349,7 +349,7 @@ const (
 			text-decoration:none;
 		}
 
-		#login-form label, #login-form input, #login-form button {
+		#login-form label, #login-form input, #login-form button, #login-form em {
 			padding: 0.5em;
 			display: block;
 			font-size: 120%;
@@ -543,10 +543,10 @@ const (
     <label for="password">Password</label>
     <input type="password" id="password" name="password">
     <button type="submit">Login</button>
+	{{if .}}
+	<em>{{.}}</em>
+	{{end}}
 </form>
-{{if .}}
-<em>{{.}}</em>
-{{end}}
 {{end}}
 `
 )
