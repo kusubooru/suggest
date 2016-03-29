@@ -3,6 +3,7 @@ package datastore
 import (
 	"bytes"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -63,6 +64,34 @@ func (db *datastore) GetSugg(username string) ([]teian.Sugg, error) {
 		return nil
 	})
 	return suggs, err
+}
+
+func (db *datastore) DeleteSugg(username string, id uint64) error {
+	var suggs []teian.Sugg
+	buf := bytes.Buffer{}
+	err := db.boltdb.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(suggsBucket))
+		value := b.Get([]byte(username))
+		buf.Write(value)
+		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
+			return fmt.Errorf("could not decode suggestions %v", err)
+		}
+		i, s := teian.FindByID(suggs, id)
+		if s == nil {
+			return errors.New("entry does not exit")
+		}
+		// delete from slice
+		suggs = append(suggs[:i], suggs[i+1:]...)
+
+		// encode remains and store to bucket
+		buf.Reset()
+		if err := gob.NewEncoder(&buf).Encode(suggs); err != nil {
+			return fmt.Errorf("could not encode new value after delete: %v", err)
+		}
+		_ = b.Put([]byte(username), buf.Bytes())
+		return nil
+	})
+	return err
 }
 
 func (db *datastore) GetAllSugg() ([]teian.Sugg, error) {

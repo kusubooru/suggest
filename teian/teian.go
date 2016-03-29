@@ -1,6 +1,7 @@
 package teian
 
 import (
+	"sort"
 	"strings"
 	"time"
 )
@@ -45,6 +46,15 @@ type ByID []Sugg
 func (s ByID) Len() int           { return len(s) }
 func (s ByID) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 func (s ByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
+
+func FindByID(suggs []Sugg, id uint64) (int, *Sugg) {
+	sort.Sort(ByID(suggs))
+	i := sort.Search(len(suggs), func(i int) bool { return suggs[i].ID >= id })
+	if i < len(suggs) && suggs[i].ID == id {
+		return i, &suggs[i]
+	}
+	return -1, nil
+}
 
 func FilterByUser(suggs []Sugg, username string) []Sugg {
 	var f []Sugg

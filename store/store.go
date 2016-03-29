@@ -18,6 +18,8 @@ type Store interface {
 	GetSugg(username string) ([]teian.Sugg, error)
 	// GetSugg gets all the suggestions.
 	GetAllSugg() ([]teian.Sugg, error)
+	// DeleteSugg deletes a user's suggestion.
+	DeleteSugg(username string, id uint64) error
 
 	// Close releases all database resources.
 	Close()
@@ -57,6 +59,15 @@ func GetAllSugg(ctx context.Context) ([]teian.Sugg, error) {
 		return nil, errors.New("no store in context")
 	}
 	return s.GetAllSugg()
+}
+
+// DeleteSugg deletes a user's suggestion.
+func DeleteSugg(ctx context.Context, username string, id uint64) error {
+	s, ok := FromContext(ctx)
+	if !ok {
+		return errors.New("no store in context")
+	}
+	return s.DeleteSugg(username, id)
 }
 
 const key = "store"

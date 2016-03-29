@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strconv"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -56,6 +57,7 @@ func main() {
 
 	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
 	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
+	http.Handle("/suggest/admin/delete", shimmie.Auth(ctx, handleDelete, *loginURL))
 	http.Handle("/suggest/submit", newHandler(ctx, submitHandler))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
@@ -140,6 +142,39 @@ func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		sort.Sort(sort.Reverse(teian.ByDate(suggs)))
 	}
 	render(w, listTmpl, suggs)
+}
+
+func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	user, ok := ctx.Value("user").(*teian.User)
+	if !ok {
+		http.Redirect(w, r, *loginURL, http.StatusFound)
+		return
+	}
+	if user.Admin != "Y" {
+		http.Error(w, "You are not authorized to perform this action.", http.StatusUnauthorized)
+		return
+	}
+	idValue := r.PostFormValue("id")
+	username := r.PostFormValue("username")
+	if idValue == "" || username == "" {
+		http.Error(w, "id and username must be present", http.StatusBadRequest)
+		return
+	}
+	id, err := strconv.ParseUint(idValue, 10, 64)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("bad id provided: %v", err), http.StatusBadRequest)
+		return
+	}
+	err = store.DeleteSugg(ctx, username, id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("delete suggestion failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/suggest/admin", http.StatusFound)
 }
 
 func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -339,6 +374,10 @@ const (
 			line-height: 200%;
 		}
 
+		.suggestion form {
+			display: inline;
+		}
+
 		.suggestion textarea {
 			display: block;
 			font-size: 120%;
@@ -476,6 +515,11 @@ const (
 {{ range $k, $v := . }}
 	<div class="suggestion">
 		<span>{{$v.FmtCreated}} by <a href="/user/{{$v.Username}}">{{$v.Username}}</a></span>
+		<form method="post" action="/suggest/admin/delete">
+			<input type="hidden" name="username" value="{{$v.Username}}">
+			<input type="hidden" name="id" value="{{$v.ID}}">
+			<input type="submit" value="Delete">
+		</form>
 		<textarea cols="80" readonly>{{$v.Text}}</textarea>
 	</div>
 {{ end }}
