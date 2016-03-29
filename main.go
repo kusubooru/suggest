@@ -161,18 +161,19 @@ func submitHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	}
 
 	type result struct {
-		Err error
-		Msg string
+		Err  error
+		Msg  string
+		Type string
 	}
 
 	// create and store suggestion
 	username := userCookie.Value
 	err = store.CreateSugg(ctx, username, &teian.Sugg{Text: text})
 	if err != nil {
-		render(w, submitTmpl, result{Err: err, Msg: "Error: Something broke :'( Our developers were notified. Sorry!"})
+		render(w, submitTmpl, result{Err: err, Type: "error", Msg: "Something broke! :'( Our developers were notified."})
 	}
 
-	render(w, submitTmpl, result{Msg: "Success: Your suggestion has been submitted. Thank you for your feedback!"})
+	render(w, submitTmpl, result{Type: "success", Msg: "Your suggestion has been submitted. Thank you for your feedback!"})
 
 }
 
@@ -185,9 +186,9 @@ func render(w http.ResponseWriter, t *template.Template, data interface{}) {
 }
 
 var (
-	suggestionTmpl = template.Must(template.New("").Parse(baseTemplate + suggestionTemplate + logoutTemplate))
-	submitTmpl     = template.Must(template.New("").Parse(baseTemplate + submitTemplate + logoutTemplate))
-	listTmpl       = template.Must(template.New("").Parse(baseTemplate + listTemplate + logoutTemplate))
+	suggestionTmpl = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + suggestionTemplate))
+	submitTmpl     = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + submitTemplate))
+	listTmpl       = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + listTemplate))
 	loginTmpl      = template.Must(template.New("").Parse(baseTemplate + loginTemplate))
 )
 
@@ -203,6 +204,9 @@ const (
 			font-size: 16px; 
 			line-height: 1.2;
 			font-family: Verdana, Geneva, sans-serif;
+			/*margin:0; 
+			padding:0;
+			border:0;*/
 		}
 		a:link {
 			color:#006FFA;
@@ -231,14 +235,76 @@ const (
 
 		#site-title {
 			font-size: 133%;
-			padding: 10px 12px 0;
+			padding: 0.5em;
 			margin: 0;
+		}
+
+		#subnav {
+		    background: #f6f6f6;
+			padding-top: 1em;
+			padding-bottom: 1em;
+			border-top: 1px #ebebeb solid;
+			border-bottom: 1px #ebebeb solid;
+		}
+
+		#subnav a {
+		    padding: 0.5em;
+		}
+
+		#subnav subnav-button-link {
+		    padding: 0.5em;
+		}
+
+		.subnav-button-form {
+			display: inline;
+		}
+
+		.subnav-button-link {
+			background: none!important;
+			border: none;
+			padding: 0!important;
+			font: inherit;
+			font-size: 120%;
+			cursor: pointer;
+			color: #006FFA;
+			display: inline;
+		}
+
+		.subnav-button-link:visited {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		.subnav-button-link:hover {
+			color:#33CFFF;
+			text-decoration:none;
+		}
+		.subnav-button-link:active {
+			color:#006FFA;
+			text-decoration:none;
 		}
 
 		label, textarea, input, button {
 			display: block;
 			font-size: 120%;
 			line-height:1.2;
+		}
+
+		#login-form label {
+			padding: 0.5em;
+		}
+
+		#login-form input {
+			padding: 0.5em;
+		}
+
+		#login-form button {
+			padding: 0.5em;
+			margin-top: 0.5em;
+		}
+
+		#login-form h1 {
+			padding: 0.5em;
+			font-size: 120%;
 		}
 
 		.suggestion {
@@ -254,29 +320,87 @@ const (
 		    background: #f6f6f6;
 		}
 
+		.suggestion-form {
+			padding: 0.5em;
+			line-height: 200%;
+		}
+
+		textarea {
+			width: 70%;
+		}
+		@media (max-width: 768px) {
+			textarea {
+				width: 100%;
+			}
+		}
+
+		.suggestion-form input[type=submit] {
+			padding: 0.5em;
+			margin-top: 0.5em;
+		}
+
+		.alert {
+			border-radius: 4px;
+			padding: 1em;
+			margin-top: 0.5em;
+			margin-bottom: 0.5em;
+			font-size: 120%;
+			width: 70%;
+		}
+		.alert strong {
+			font-size: inherit;
+		}
+		@media (max-width: 768px) {
+			.alert{
+				width: 90%;
+				padding-left:5%;
+				padding-right:5%;
+			}
+			.alert strong {
+			}
+		}
+
+		.alert-success {
+			color: #3c763d;
+			background-color: #dff0d8;
+			border-color: #d6e9c6;
+		}
+
+		.alert-error {
+			color: #a94442;
+			background-color: #f2dede;
+			border-color: #ebccd1;
+		}
+
+
 	</style>
 </head>
 <body>
 	<h1 id="site-title"><a href="/post/list">Kusubooru</a></h1>
+	{{block "subnav" .}}{{end}}
 	{{block "content" .}}{{end}}
 </body>
 </html>
 `
-	logoutTemplate = `
-{{define "logout"}}
-<form method="post" action="/suggest/logout">
-     <button type="submit">Logout</button>
-</form>
+	subnavTemplate = `
+{{define "subnav"}}
+<div id="subnav">
+	<a href="/suggest">New suggestion</a>
+	<form class="subnav-button-form" method="post" action="/suggest/logout">
+	     <input class="subnav-button-link" type="submit" value="Logout">
+	</form>
+</div>
 {{end}}
 `
 	suggestionTemplate = `
 {{define "content"}}
-<form method="post" action="/suggest/submit">
-	<label for="text">Write your suggestion</label>
-	<textarea id="text" class="large" rows="20" cols="80" name="text" placeholder="Write your suggestion here."></textarea>
-	<input type="submit">
-</form>
-{{block "logout" .}}{{end}}
+<div class="suggestion-form">
+	<form method="post" action="/suggest/submit">
+		<p>Write your suggestion</p>
+		<textarea class="large" rows="20" cols="80" name="text" placeholder="Write your suggestion here."></textarea>
+		<input type="submit">
+	</form>
+</div>
 {{end}}
 `
 	submitTemplate = `
@@ -287,10 +411,16 @@ const (
 <!----------->
 {{end}}
 {{ if .Msg }}
-<em>{{.Msg}}</em>
+<div class="alert alert-{{.Type}}">
+	<strong>
+	{{if eq .Type "success"}}
+	Success:
+	{{else}}
+	Error:
+	{{end}}
+	</strong>{{.Msg}}
+</div>
 {{end}}
-<a href="/suggest">New suggetion</a>
-{{block "logout" .}}{{end}}
 {{end}}
 `
 	listTemplate = `
@@ -301,14 +431,13 @@ const (
 		<textarea cols="80" readonly>{{$v.Text}}</textarea>
 	</div>
 {{ end }}
-{{block "logout" .}}{{end}}
 {{end}}
 `
 
 	loginTemplate = `
 {{define "content"}}
+<form id="login-form" method="post" action="/suggest/login/submit">
 <h1>Login</h1>
-<form method="post" action="/suggest/login/submit">
     <label for="username">User name</label>
     <input type="text" id="username" name="username">
     <label for="password">Password</label>
