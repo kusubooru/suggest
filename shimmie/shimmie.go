@@ -2,6 +2,7 @@ package shimmie
 
 import (
 	"crypto/md5"
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
@@ -35,20 +36,26 @@ func Auth(ctx context.Context, fn func(context.Context, http.ResponseWriter, *ht
 		}
 		usernameCookie, err := r.Cookie("shm_user")
 		if err != nil || usernameCookie.Value == "" {
-			log.Print("no user cookie is set or it is empty")
 			http.Redirect(w, r, redirectURL, http.StatusFound)
 			return
 		}
 		sessionCookie, err := r.Cookie("shm_session")
 		if err != nil {
-			log.Print("no session cookie")
+			log.Print("shimmie: no session cookie")
 			http.Redirect(w, r, redirectURL, http.StatusFound)
 			return
 		}
-		user, err := store.GetUser(ctx, usernameCookie.Value)
+		username := usernameCookie.Value
+		user, err := store.GetUser(ctx, username)
 		if err != nil {
-			log.Printf("user %q does not exist", usernameCookie.Value)
-			http.Redirect(w, r, redirectURL, http.StatusFound)
+			if err == sql.ErrNoRows {
+				log.Printf("shimmie: user %q does not exist", username)
+				http.Redirect(w, r, redirectURL, http.StatusFound)
+				return
+			}
+			msg := fmt.Sprintf("shimmie: could not authenticate: get user %q failed: %v", username, err.Error())
+			log.Print(msg)
+			http.Error(w, msg, http.StatusInternalServerError)
 			return
 		}
 		passwordHash := user.Pass

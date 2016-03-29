@@ -193,8 +193,9 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 			render(w, loginTmpl, "User does not exist.")
 			return
 		}
-		log.Println(err)
-		http.Error(w, fmt.Sprintf("get user %q failed: %v", username, err.Error()), http.StatusInternalServerError)
+		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
+		log.Print(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 	hash := md5.Sum([]byte(username + password))
@@ -253,8 +254,9 @@ func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 
 func render(w http.ResponseWriter, t *template.Template, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
-		log.Print(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		msg := fmt.Sprintln("could not render template:", err)
+		log.Print(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 }

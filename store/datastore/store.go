@@ -29,12 +29,10 @@ func Open(driver, config, boltFile string) store.Store {
 
 func (db *datastore) Close() {
 	if err := db.DB.Close(); err != nil {
-		log.Print(err)
-		log.Fatalln("database close failed")
+		log.Fatalln("database close failed:", err)
 	}
 	if err := db.boltdb.Close(); err != nil {
-		log.Print(err)
-		log.Fatalln("bolt close failed")
+		log.Fatalln("bolt close failed:", err)
 	}
 }
 
@@ -44,8 +42,7 @@ func (db *datastore) Close() {
 func openBolt(file string) *bolt.DB {
 	db, err := bolt.Open(file, 0600, &bolt.Options{Timeout: 5 * time.Second})
 	if err != nil {
-		log.Print(err)
-		log.Fatalln("bolt open failed")
+		log.Fatalln("bolt open failed:", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		if _, err = tx.CreateBucketIfNotExists([]byte(suggsBucket)); err != nil {
@@ -54,8 +51,7 @@ func openBolt(file string) *bolt.DB {
 		return nil
 	})
 	if err != nil {
-		log.Print(err)
-		log.Fatalln("bolt bucket creation failed")
+		log.Fatalln("bolt bucket creation failed:", err)
 	}
 	return db
 }
@@ -65,16 +61,14 @@ func openBolt(file string) *bolt.DB {
 func openDB(driver, config string) *sql.DB {
 	db, err := sql.Open(driver, config)
 	if err != nil {
-		log.Print(err)
-		log.Fatalln("database connection failed")
+		log.Fatalln("database connection failed:", err)
 	}
 	if driver == "mysql" {
 		// per issue https://github.com/go-sql-driver/mysql/issues/257
 		db.SetMaxIdleConns(0)
 	}
 	if err := pingDatabase(db); err != nil {
-		log.Print(err)
-		log.Fatalln("database ping attempts failed")
+		log.Fatalln("database ping attempts failed:", err)
 	}
 	return db
 }
