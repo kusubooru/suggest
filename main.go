@@ -58,7 +58,7 @@ func main() {
 	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
 	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
 	http.Handle("/suggest/admin/delete", shimmie.Auth(ctx, handleDelete, *loginURL))
-	http.Handle("/suggest/submit", newHandler(ctx, handleSubmit))
+	http.Handle("/suggest/submit", shimmie.Auth(ctx, handleSubmit, *loginURL))
 	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
@@ -145,6 +145,7 @@ func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
@@ -178,6 +179,7 @@ func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
@@ -210,22 +212,21 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	// get user from context
+	user, ok := ctx.Value("user").(*teian.User)
+	if !ok {
+		http.Redirect(w, r, *loginURL, http.StatusFound)
 		return
 	}
 	text := r.PostFormValue("text")
 	// redirect if suggestion text is empty
 	if len(strings.TrimSpace(text)) == 0 {
 		http.Redirect(w, r, "/suggest", http.StatusFound)
-		return
-	}
-
-	// get user cookie to find out username
-	userCookie, err := r.Cookie("shm_user")
-	if err != nil || userCookie.Value == "" {
-		log.Print("empty or no user cookie found when submiting suggestion")
-		http.Redirect(w, r, *loginURL, http.StatusFound)
 		return
 	}
 
@@ -236,8 +237,7 @@ func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and store suggestion
-	username := userCookie.Value
-	err = store.CreateSugg(ctx, username, &teian.Sugg{Text: text})
+	err := store.CreateSugg(ctx, user.Name, &teian.Sugg{Text: text})
 	if err != nil {
 		render(w, submitTmpl, result{Err: err, Type: "error", Msg: "Something broke! :'( Our developers were notified."})
 	}
