@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"strings"
 
 	"golang.org/x/net/context"
@@ -100,18 +101,43 @@ func serveLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	u, ok := ctx.Value("user").(*teian.User)
+	user, ok := ctx.Value("user").(*teian.User)
 	if !ok {
 		http.Redirect(w, r, *loginURL, http.StatusFound)
 		return
 	}
-	if u.Admin != "Y" {
+	if user.Admin != "Y" {
 		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
 		return
 	}
 	suggs, err := store.GetAllSugg(ctx)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+	}
+
+	u := r.FormValue("u")
+	t := r.FormValue("t")
+	o := r.FormValue("o")
+	// filter
+	if u != "" {
+		suggs = teian.FilterByUser(suggs, u)
+	}
+	if t != "" {
+		suggs = teian.FilterByText(suggs, t)
+	}
+
+	// order
+	switch o {
+	case "ua":
+		sort.Sort(teian.ByUser(suggs))
+	case "ud":
+		sort.Sort(sort.Reverse(teian.ByUser(suggs)))
+	case "da":
+		sort.Sort(teian.ByDate(suggs))
+	case "dd":
+		fallthrough
+	default:
+		sort.Sort(sort.Reverse(teian.ByDate(suggs)))
 	}
 	render(w, listTmpl, suggs)
 }
@@ -389,8 +415,17 @@ const (
 {{define "toolbar"}}
 <div class="toolbar">
 	<form method="get" action="/suggest/admin">
-		<input type="text" placeholder="User">
-	    <button>Search</button>
+		<input type="text" name="u" placeholder="Username">
+		<input type="text" name="t" placeholder="Text">
+		<label for="order">Order By</label>
+		<select id="order" name="o">
+			<option value="dd">Date Desc</option>
+			<option value="da">Date Asc</option>
+			<option value="ud">Username Desc</option>
+			<option value="ua">Username Asc</option>
+		</select>
+	    <button type="submit">Search</button>
+		<input type="reset" value="Reset">
 	</form>
 </div>
 {{end}}
