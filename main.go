@@ -34,10 +34,15 @@ var (
 	useTLS bool
 )
 
-const description = `Usage: teian [options]
+const (
+	description = `Usage: teian [options]
   A service that allows users to submit suggestions.
 Options:
 `
+	confContextKey       = "conf"
+	submitSuccessMessage = "Your suggestion has been submitted. Thank you for your feedback!"
+	submitFailureMessage = "Something broke! :'( Our developers were notified."
+)
 
 func usage() {
 	fmt.Fprintf(os.Stderr, description)
@@ -55,12 +60,20 @@ func main() {
 	closeStoreOnSignal(s)
 	// add store to context
 	ctx := store.NewContext(context.Background(), s)
+	// get app conf values
+	conf, cerr := store.GetConf(ctx)
+	if cerr != nil {
+		s.Close()
+		log.Fatalln("could not get conf:", cerr)
+	}
+	// add conf to context
+	ctx = context.WithValue(ctx, confContextKey, conf)
 
 	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
 	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
 	http.Handle("/suggest/admin/delete", shimmie.Auth(ctx, handleDelete, *loginURL))
 	http.Handle("/suggest/submit", shimmie.Auth(ctx, handleSubmit, *loginURL))
-	http.Handle("/suggest/login", http.HandlerFunc(serveLogin))
+	http.Handle("/suggest/login", newHandler(ctx, serveLogin))
 	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
 
@@ -96,11 +109,11 @@ func newHandler(ctx context.Context, fn ctxHandlerFunc) http.HandlerFunc {
 }
 
 func serveIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	render(w, suggestionTmpl, nil)
+	render(ctx, w, suggestionTmpl, nil)
 }
 
-func serveLogin(w http.ResponseWriter, r *http.Request) {
-	render(w, loginTmpl, nil)
+func serveLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	render(ctx, w, loginTmpl, nil)
 }
 
 func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -199,7 +212,7 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	user, err := store.GetUser(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			render(w, loginTmpl, "User does not exist.")
+			render(ctx, w, loginTmpl, "User does not exist.")
 			return
 		}
 		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
@@ -210,7 +223,7 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	hash := md5.Sum([]byte(username + password))
 	passwordHash := fmt.Sprintf("%x", hash)
 	if user.Pass != passwordHash {
-		render(w, loginTmpl, "Username and password do not match.")
+		render(ctx, w, loginTmpl, "Username and password do not match.")
 		return
 	}
 	addr := strings.Split(r.RemoteAddr, ":")[0]
@@ -254,20 +267,37 @@ func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	// create and store suggestion
 	err := store.CreateSugg(ctx, user.Name, &teian.Sugg{Text: text})
 	if err != nil {
-		render(w, submitTmpl, result{Err: err, Type: "error", Msg: "Something broke! :'( Our developers were notified."})
+		render(ctx, w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
 	}
 
-	render(w, submitTmpl, result{Type: "success", Msg: "Your suggestion has been submitted. Thank you for your feedback!"})
+	render(ctx, w, submitTmpl, result{Type: "success", Msg: submitSuccessMessage})
 
 }
 
-func render(w http.ResponseWriter, t *template.Template, data interface{}) {
+func renderSimple(w http.ResponseWriter, t *template.Template, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
 		msg := fmt.Sprintln("could not render template:", err)
 		log.Print(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
+}
+
+func render(ctx context.Context, w http.ResponseWriter, t *template.Template, data interface{}) {
+	conf, ok := ctx.Value(confContextKey).(*teian.Conf)
+	if msg := "conf not in context"; !ok {
+		log.Print(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	renderSimple(w, t, struct {
+		Data interface{}
+		Conf *teian.Conf
+	}{
+		Data: data,
+		Conf: conf,
+	})
 }
 
 var (
@@ -278,12 +308,25 @@ var (
 )
 
 const (
-	baseTemplate = `
-<!DOCTYPE html>
+	baseTemplate = `<!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>suggest</title>
+	<script type='text/javascript'>
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', '{{.Conf.AnalyticsID}}']);
+		_gaq.push(['_trackPageview']);
+		(function() {
+		  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+	<meta name="description" content="{{.Conf.Description}}">
+	<meta name="keywords" content="{{.Conf.Keywords}}">
 	<style>
 		* {
 			font-size: 16px; 
@@ -467,7 +510,7 @@ const (
 	</style>
 </head>
 <body>
-	<h1 id="site-title"><a href="/post/list">Kusubooru</a></h1>
+	<h1 id="site-title"><a href="/post/list">{{.Conf.SiteTitle}}</a></h1>
 	{{block "subnav" .}}{{end}}
 	{{block "toolbar" .}}{{end}}
 	{{block "content" .}}{{end}}
@@ -516,27 +559,27 @@ const (
 `
 	submitTemplate = `
 {{define "content"}}
-{{ if .Err }}
+{{ if .Data.Err }}
 <!-- Error -->
-<!-- .Err  -->
+<!-- .Data.Err  -->
 <!----------->
 {{end}}
-{{ if .Msg }}
-<div class="alert alert-{{.Type}}">
+{{ if .Data.Msg }}
+<div class="alert alert-{{.Data.Type}}">
 	<strong>
-	{{if eq .Type "success"}}
+	{{if eq .Data.Type "success"}}
 	Success:
 	{{else}}
 	Error:
 	{{end}}
-	</strong>{{.Msg}}
+	</strong>{{.Data.Msg}}
 </div>
 {{end}}
 {{end}}
 `
 	listTemplate = `
 {{define "content"}}
-{{ range $k, $v := . }}
+{{ range $k, $v := .Data }}
 	<div class="suggestion">
 		<span>{{$v.FmtCreated}} by <a href="/user/{{$v.Username}}">{{$v.Username}}</a></span>
 		<form method="post" action="/suggest/admin/delete">
@@ -559,8 +602,8 @@ const (
     <label for="password">Password</label>
     <input type="password" id="password" name="password">
     <button type="submit">Login</button>
-	{{if .}}
-	<em>{{.}}</em>
+	{{if .Data}}
+	<em>{{.Data}}</em>
 	{{end}}
 </form>
 {{end}}
