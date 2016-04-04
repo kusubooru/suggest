@@ -17,6 +17,19 @@ type User struct {
 	Class    string
 }
 
+// Conf holds configuration values that the program needs.
+type Conf struct {
+	Title       string
+	AnalyticsID string
+	Description string
+	Keywords    string
+}
+
+// SiteTitle returns the Title capitalized.
+func (c Conf) SiteTitle() string {
+	return strings.Title(c.Title)
+}
+
 // Sugg represents a suggestion that a user can create.
 type Sugg struct {
 	ID       uint64

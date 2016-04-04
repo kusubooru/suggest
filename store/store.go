@@ -21,8 +21,20 @@ type Store interface {
 	// DeleteSugg deletes a user's suggestion.
 	DeleteSugg(username string, id uint64) error
 
+	// GetConf gets configuration values needed by the program.
+	GetConf() (*teian.Conf, error)
+
 	// Close releases all database resources.
 	Close()
+}
+
+// GetConf gets configuration values needed by the program.
+func GetConf(ctx context.Context) (*teian.Conf, error) {
+	s, ok := FromContext(ctx)
+	if !ok {
+		return nil, errors.New("no store in context")
+	}
+	return s.GetConf()
 }
 
 // GetUser gets a user by unique username.
