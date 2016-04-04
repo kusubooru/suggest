@@ -23,14 +23,18 @@ import (
 )
 
 var (
-	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
-	dbDriver = flag.String("dbdriver", "mysql", "Database driver")
-	dbConfig = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
-	boltFile = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
-	loginURL = flag.String("loginurl", "/suggest/login", "Login URL path to redirect to")
-	writeMsg = flag.String("writemsg", writeMessage, "Message that appears on new suggestion screen")
-	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
-	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
+	// Set with:
+	// go install -ldflags="-X main.TheVersion=$(git describe --tags)"
+	TheVersion = "0.0.1"
+	httpAddr   = flag.String("http", "localhost:8080", "HTTP listen address")
+	dbDriver   = flag.String("dbdriver", "mysql", "database driver")
+	dbConfig   = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
+	boltFile   = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
+	loginURL   = flag.String("loginurl", "/suggest/login", "login URL path to redirect to")
+	writeMsg   = flag.String("writemsg", writeMessage, "message that appears on new suggestion screen")
+	version    = flag.Bool("v", false, "print program version")
+	certFile   = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
+	keyFile    = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
 	// Set after flag parsing based on certFile & keyFile.
 	useTLS bool
 )
@@ -56,6 +60,11 @@ func main() {
 	flag.Usage = usage
 	flag.Parse()
 	useTLS = *certFile != "" && *keyFile != ""
+
+	if *version {
+		fmt.Printf("teian%v\n", TheVersion)
+		return
+	}
 
 	// create database connection and store
 	s := datastore.Open(*dbDriver, *dbConfig, *boltFile)
