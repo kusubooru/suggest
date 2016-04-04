@@ -2,9 +2,21 @@
 
 A service that allows users to submit suggestions.
 
+## Installation
+
+```console
+go get -u github.com/kusubooru/teian
+```
+
 ## Usage
 
-Typical usage:
+Local example:
+
+```console
+teian -dbconfig=username:password@(localhost:3306)/database?parseTime=true
+```
+
+Live example:
 
 ```console
 teian -http="localhost:8081"
