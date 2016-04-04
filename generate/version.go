@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 const (
@@ -35,7 +35,11 @@ func findVersion() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(bytes.Trim(b, "\n")), nil
+	return strings.TrimPrefix(chomp(string(b)), "v"), nil
+}
+
+func chomp(s string) string {
+	return strings.Trim(s, "\n")
 }
 
 func generateVersion() error {
