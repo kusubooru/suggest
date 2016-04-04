@@ -3,5 +3,5 @@
 package main
 
 // Can also be set with:
-// go clean -i && go install -ldflags="-X main.TheVersion=$(git describe --tags --always)"
-var TheVersion = "10d4cc6"
+// go clean -i && go install -ldflags="-X main.TheVersion=$(git describe --always)"
+var TheVersion = "1.0.0-beta"
