@@ -16,7 +16,7 @@ const (
 package main
 
 // Can also be set with:
-// go clean -i && go install -ldflags="-X main.TheVersion=$(git describe --tags --always)"
+// go clean -i && go install -ldflags="-X main.TheVersion=$(git describe --always)"
 var TheVersion = "{{.}}"
 `
 )
@@ -31,7 +31,7 @@ func main() {
 }
 
 func findVersion() (string, error) {
-	b, err := exec.Command("git", "describe", "--tags", "--always").Output()
+	b, err := exec.Command("git", "describe", "--always").Output()
 	if err != nil {
 		return "", err
 	}
