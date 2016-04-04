@@ -23,6 +23,7 @@ type Conf struct {
 	AnalyticsID string
 	Description string
 	Keywords    string
+	WriteMsg    string
 }
 
 // SiteTitle returns the Title capitalized.

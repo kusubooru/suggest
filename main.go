@@ -28,6 +28,7 @@ var (
 	dbConfig = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
 	boltFile = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
 	loginURL = flag.String("loginurl", "/suggest/login", "Login URL path to redirect to")
+	writeMsg = flag.String("writemsg", writeMessage, "Message that appears on new suggestion screen")
 	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
 	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
 	// Set after flag parsing based on certFile & keyFile.
@@ -39,6 +40,7 @@ const (
   A service that allows users to submit suggestions.
 Options:
 `
+	writeMessage         = `Do you have a suggestion on how to improve the site? Write it here!`
 	confContextKey       = "conf"
 	submitSuccessMessage = "Your suggestion has been submitted. Thank you for your feedback!"
 	submitFailureMessage = "Something broke! :'( Our developers were notified."
@@ -66,6 +68,7 @@ func main() {
 		s.Close()
 		log.Fatalln("could not get conf:", cerr)
 	}
+	conf.WriteMsg = *writeMsg
 	// add conf to context
 	ctx = context.WithValue(ctx, confContextKey, conf)
 
@@ -550,7 +553,7 @@ const (
 {{define "content"}}
 <div class="suggestion-form">
 	<form method="post" action="/suggest/submit">
-		<p>Write your suggestion</p>
+		<p>{{.Conf.WriteMsg}}</p>
 		<textarea class="large" rows="20" cols="80" name="text" placeholder="Write your suggestion here."></textarea>
 		<input type="submit">
 	</form>
