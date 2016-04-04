@@ -121,16 +121,25 @@ func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	u := r.FormValue("u")
 	t := r.FormValue("t")
 	o := r.FormValue("o")
-	// filter
-	if u != "" {
-		suggs = teian.FilterByUser(suggs, u)
+
+	suggs = searchSuggs(suggs, u, t, o)
+	render(ctx, w, listTmpl, suggs)
+}
+
+func searchSuggs(suggs []teian.Sugg, username, text, order string) []teian.Sugg {
+	if len(suggs) == 0 || len(suggs) == 1 {
+		return suggs
 	}
-	if t != "" {
-		suggs = teian.FilterByText(suggs, t)
+	// filter
+	if username != "" {
+		suggs = teian.FilterByUser(suggs, username)
+	}
+	if text != "" {
+		suggs = teian.FilterByText(suggs, text)
 	}
 
 	// order
-	switch o {
+	switch order {
 	case "ua":
 		sort.Sort(teian.ByUser(suggs))
 	case "ud":
@@ -142,7 +151,7 @@ func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	default:
 		sort.Sort(sort.Reverse(teian.ByDate(suggs)))
 	}
-	render(w, listTmpl, suggs)
+	return suggs
 }
 
 func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
