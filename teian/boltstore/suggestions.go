@@ -101,21 +101,16 @@ func (db *boltstore) All() ([]teian.Suggestion, error) {
 		b := tx.Bucket([]byte(suggestionsBucket))
 
 		// Iterate over items in sorted key order.
-		if err := b.ForEach(func(k, v []byte) error {
+		return b.ForEach(func(k, v []byte) error {
 			var userSuggs []teian.Suggestion
 			buf.Reset()
 			buf.Write(v)
 			if err := gob.NewDecoder(&buf).Decode(&userSuggs); err != nil {
 				return fmt.Errorf("could not decode suggestions of %q: %v", k, err)
 			}
-			for _, sugg := range userSuggs {
-				suggs = append(suggs, sugg)
-			}
+			suggs = append(suggs, userSuggs...)
 			return nil
-		}); err != nil {
-			return err
-		}
-		return nil
+		})
 	})
 	if err != nil {
 		return nil, err

@@ -36,10 +36,8 @@ func openBolt(file string) *bolt.DB {
 		log.Fatalln("bolt open failed:", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err = tx.CreateBucketIfNotExists([]byte(suggestionsBucket)); err != nil {
-			return err
-		}
-		return nil
+		_, err = tx.CreateBucketIfNotExists([]byte(suggestionsBucket))
+		return err
 	})
 	if err != nil {
 		log.Fatalln("bolt bucket creation failed:", err)
