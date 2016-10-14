@@ -4,14 +4,16 @@
 		{
 			"importpath": "github.com/boltdb/bolt",
 			"repository": "https://github.com/boltdb/bolt",
+			"vcs": "",
 			"revision": "831b652a7f8dbefaf94da0eb66abd46c0c4bcf23",
 			"branch": "master",
 			"notests": true
 		},
 		{
-			"importpath": "github.com/go-sql-driver/mysql",
-			"repository": "https://github.com/go-sql-driver/mysql",
-			"revision": "66312f7fe2678aa0f5ec770f96702f4c4ec5aa8e",
+			"importpath": "github.com/kusubooru/shimmie",
+			"repository": "https://github.com/kusubooru/shimmie",
+			"vcs": "git",
+			"revision": "10437d2fea94a4d812ee4b2212f06f38c25d9e53",
 			"branch": "master",
 			"notests": true
 		}
