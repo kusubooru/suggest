@@ -64,10 +64,6 @@ func main() {
 		return
 	}
 
-	// create database connection and store
-	s := boltstore.Open(*boltFile)
-	closeStoreOnSignal(s)
-
 	// open store with new database connection and create new Shimmie
 	shim := shimmie.New(*imagePath, *thumbPath, store.Open(*dbDriver, *dbConfig))
 
@@ -77,9 +73,13 @@ func main() {
 		log.Fatalln("could not get common conf:", cerr)
 	}
 
+	// create suggestion store
+	suggStore := boltstore.NewSuggestionStore(*boltFile)
+	closeStoreOnSignal(suggStore)
+
 	app := &App{
 		Shimmie:     shim,
-		Suggestions: s,
+		Suggestions: suggStore,
 		Conf: &teian.Conf{
 			Title:       common.Title,
 			AnalyticsID: common.AnalyticsID,
