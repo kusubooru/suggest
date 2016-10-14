@@ -279,7 +279,7 @@ func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and store suggestion
-	err := app.Suggestions.CreateSugg(user.Name, &teian.Sugg{Text: text})
+	err := app.Suggestions.Create(user.Name, &teian.Sugg{Text: text})
 	if err != nil {
 		app.render(w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
 	}

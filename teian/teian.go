@@ -35,7 +35,7 @@ func (c Conf) SiteTitle() string {
 // suggestions.
 type SuggStore interface {
 	// CreateSugg creates a new suggestion for a user.
-	CreateSugg(username string, sugg *Sugg) error
+	Create(username string, sugg *Sugg) error
 	// GetSugg gets all the suggestions created by a user.
 	GetSugg(username string) ([]Sugg, error)
 	// GetSugg gets all the suggestions.

@@ -12,7 +12,7 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-func (db *datastore) CreateSugg(username string, sugg *teian.Sugg) error {
+func (db *datastore) Create(username string, sugg *teian.Sugg) error {
 
 	err := db.boltdb.Update(func(tx *bolt.Tx) error {
 		var suggs []teian.Sugg
