@@ -12,7 +12,7 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-func (db *datastore) Create(username string, sugg *teian.Suggestion) error {
+func (db *boltstore) Create(username string, sugg *teian.Suggestion) error {
 
 	err := db.Update(func(tx *bolt.Tx) error {
 		var suggs []teian.Suggestion
@@ -52,7 +52,7 @@ func (db *datastore) Create(username string, sugg *teian.Suggestion) error {
 	return err
 }
 
-func (db *datastore) OfUser(username string) ([]teian.Suggestion, error) {
+func (db *boltstore) OfUser(username string) ([]teian.Suggestion, error) {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.View(func(tx *bolt.Tx) error {
@@ -66,7 +66,7 @@ func (db *datastore) OfUser(username string) ([]teian.Suggestion, error) {
 	return suggs, err
 }
 
-func (db *datastore) Delete(username string, id uint64) error {
+func (db *boltstore) Delete(username string, id uint64) error {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.Update(func(tx *bolt.Tx) error {
@@ -94,7 +94,7 @@ func (db *datastore) Delete(username string, id uint64) error {
 	return err
 }
 
-func (db *datastore) All() ([]teian.Suggestion, error) {
+func (db *boltstore) All() ([]teian.Suggestion, error) {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.View(func(tx *bolt.Tx) error {

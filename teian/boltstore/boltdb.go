@@ -10,7 +10,7 @@ import (
 
 const suggestionsBucket = "suggestions"
 
-type datastore struct {
+type boltstore struct {
 	*bolt.DB
 }
 
@@ -18,10 +18,10 @@ type datastore struct {
 // bolt database file will be created if it does not exist.
 func Open(boltFile string) teian.SuggestionStore {
 	boltdb := openBolt(boltFile)
-	return &datastore{boltdb}
+	return &boltstore{boltdb}
 }
 
-func (db *datastore) Close() {
+func (db *boltstore) Close() {
 	if err := db.DB.Close(); err != nil {
 		log.Fatalln("bolt close failed:", err)
 	}
