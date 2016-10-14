@@ -141,7 +141,7 @@ func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
 		return
 	}
-	suggs, err := app.Suggestions.GetAllSugg()
+	suggs, err := app.Suggestions.All()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 	}

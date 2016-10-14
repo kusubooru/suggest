@@ -94,7 +94,7 @@ func (db *datastore) Delete(username string, id uint64) error {
 	return err
 }
 
-func (db *datastore) GetAllSugg() ([]teian.Sugg, error) {
+func (db *datastore) All() ([]teian.Sugg, error) {
 	var suggs []teian.Sugg
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {

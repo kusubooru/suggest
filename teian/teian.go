@@ -39,7 +39,7 @@ type SuggStore interface {
 	// GetSugg gets all the suggestions created by a user.
 	GetSugg(username string) ([]Sugg, error)
 	// GetSugg gets all the suggestions.
-	GetAllSugg() ([]Sugg, error)
+	All() ([]Sugg, error)
 	// Delete deletes a user's suggestion.
 	Delete(username string, id uint64) error
 
