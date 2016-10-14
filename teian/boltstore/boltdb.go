@@ -14,8 +14,9 @@ type boltstore struct {
 	*bolt.DB
 }
 
-// Open opens the bolt database file and returns a new SuggestionStore. The
-// bolt database file will be created if it does not exist.
+// NewSuggestionStore opens the bolt database file and returns a new
+// SuggestionStore. The bolt database file will be created if it does not
+// exist.
 func NewSuggestionStore(boltFile string) teian.SuggestionStore {
 	boltdb := openBolt(boltFile)
 	return &boltstore{boltdb}
