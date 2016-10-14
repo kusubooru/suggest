@@ -16,7 +16,7 @@ type datastore struct {
 
 // Open opens the bolt database file and returns a new SuggStore. The bolt
 // database file will be created if it does not exist.
-func Open(boltFile string) teian.SuggStore {
+func Open(boltFile string) teian.SuggestionStore {
 	boltdb := openBolt(boltFile)
 	return &datastore{boltdb}
 }

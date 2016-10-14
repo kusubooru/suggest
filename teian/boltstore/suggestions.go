@@ -12,10 +12,10 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-func (db *datastore) Create(username string, sugg *teian.Sugg) error {
+func (db *datastore) Create(username string, sugg *teian.Suggestion) error {
 
 	err := db.boltdb.Update(func(tx *bolt.Tx) error {
-		var suggs []teian.Sugg
+		var suggs []teian.Suggestion
 		buf := bytes.Buffer{}
 
 		// get bucket
@@ -52,8 +52,8 @@ func (db *datastore) Create(username string, sugg *teian.Sugg) error {
 	return err
 }
 
-func (db *datastore) OfUser(username string) ([]teian.Sugg, error) {
-	var suggs []teian.Sugg
+func (db *datastore) OfUser(username string) ([]teian.Suggestion, error) {
+	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {
 		value := tx.Bucket([]byte(suggsBucket)).Get([]byte(username))
@@ -67,7 +67,7 @@ func (db *datastore) OfUser(username string) ([]teian.Sugg, error) {
 }
 
 func (db *datastore) Delete(username string, id uint64) error {
-	var suggs []teian.Sugg
+	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(suggsBucket))
@@ -94,15 +94,15 @@ func (db *datastore) Delete(username string, id uint64) error {
 	return err
 }
 
-func (db *datastore) All() ([]teian.Sugg, error) {
-	var suggs []teian.Sugg
+func (db *datastore) All() ([]teian.Suggestion, error) {
+	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(suggsBucket))
 
 		// Iterate over items in sorted key order.
 		if err := b.ForEach(func(k, v []byte) error {
-			var userSuggs []teian.Sugg
+			var userSuggs []teian.Suggestion
 			buf.Reset()
 			buf.Write(v)
 			if err := gob.NewDecoder(&buf).Decode(&userSuggs); err != nil {

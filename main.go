@@ -109,7 +109,7 @@ func main() {
 	}
 }
 
-func closeStoreOnSignal(s teian.SuggStore) {
+func closeStoreOnSignal(s teian.SuggestionStore) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	go func() {
@@ -122,7 +122,7 @@ func closeStoreOnSignal(s teian.SuggStore) {
 }
 
 type App struct {
-	Suggestions teian.SuggStore
+	Suggestions teian.SuggestionStore
 	Conf        *teian.Conf
 	Shimmie     *shimmie.Shimmie
 }
@@ -154,7 +154,7 @@ func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
 	app.render(w, listTmpl, suggs)
 }
 
-func searchSuggs(suggs []teian.Sugg, username, text, order string) []teian.Sugg {
+func searchSuggs(suggs []teian.Suggestion, username, text, order string) []teian.Suggestion {
 	if len(suggs) == 0 || len(suggs) == 1 {
 		return suggs
 	}
@@ -279,7 +279,7 @@ func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and store suggestion
-	err := app.Suggestions.Create(user.Name, &teian.Sugg{Text: text})
+	err := app.Suggestions.Create(user.Name, &teian.Suggestion{Text: text})
 	if err != nil {
 		app.render(w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
 	}
