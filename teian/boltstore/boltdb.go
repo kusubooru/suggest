@@ -1,11 +1,11 @@
-package datastore
+package boltstore
 
 import (
 	"log"
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/kusubooru/teian/store"
+	"github.com/kusubooru/teian/teian"
 )
 
 const suggsBucket = "suggestions"
@@ -14,9 +14,9 @@ type datastore struct {
 	boltdb *bolt.DB
 }
 
-// Open opens the bolt database file and returns a new Store. The bolt database
-// file will be created if it does not exist.
-func Open(boltFile string) store.Store {
+// Open opens the bolt database file and returns a new SuggStore. The bolt
+// database file will be created if it does not exist.
+func Open(boltFile string) teian.SuggStore {
 	boltdb := openBolt(boltFile)
 	return &datastore{boltdb}
 }

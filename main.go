@@ -14,10 +14,9 @@ import (
 	"strings"
 
 	"github.com/kusubooru/shimmie"
-	shimstore "github.com/kusubooru/shimmie/store"
-	"github.com/kusubooru/teian/store"
-	"github.com/kusubooru/teian/store/datastore"
+	"github.com/kusubooru/shimmie/store"
 	"github.com/kusubooru/teian/teian"
+	"github.com/kusubooru/teian/teian/boltstore"
 )
 
 //go:generate go run generate/version.go
@@ -67,11 +66,11 @@ func main() {
 	}
 
 	// create database connection and store
-	s := datastore.Open(*boltFile)
+	s := boltstore.Open(*boltFile)
 	closeStoreOnSignal(s)
 
 	// open store with new database connection and create new Shimmie
-	shim := shimmie.New(*imagePath, *thumbPath, shimstore.Open(*dbDriver, *dbConfig))
+	shim := shimmie.New(*imagePath, *thumbPath, store.Open(*dbDriver, *dbConfig))
 
 	// get common conf
 	common, cerr := shim.Store.GetCommon()
@@ -110,7 +109,7 @@ func main() {
 	}
 }
 
-func closeStoreOnSignal(s store.Store) {
+func closeStoreOnSignal(s teian.SuggStore) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	go func() {
@@ -123,7 +122,7 @@ func closeStoreOnSignal(s store.Store) {
 }
 
 type App struct {
-	Store   store.Store
+	Store   teian.SuggStore
 	Conf    *teian.Conf
 	Shimmie *shimmie.Shimmie
 }

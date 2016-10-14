@@ -31,6 +31,22 @@ func (c Conf) SiteTitle() string {
 	return strings.Title(c.Title)
 }
 
+// SuggStore describes all the operations that need to access a storage for the
+// suggestions.
+type SuggStore interface {
+	// CreateSugg creates a new suggestion for a user.
+	CreateSugg(username string, sugg *Sugg) error
+	// GetSugg gets all the suggestions created by a user.
+	GetSugg(username string) ([]Sugg, error)
+	// GetSugg gets all the suggestions.
+	GetAllSugg() ([]Sugg, error)
+	// DeleteSugg deletes a user's suggestion.
+	DeleteSugg(username string, id uint64) error
+
+	// Close releases all database resources.
+	Close()
+}
+
 // Sugg represents a suggestion that a user can create.
 type Sugg struct {
 	ID       uint64
