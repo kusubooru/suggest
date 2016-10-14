@@ -24,7 +24,7 @@ func NewSuggestionStore(boltFile string) teian.SuggestionStore {
 
 func (db *boltstore) Close() {
 	if err := db.DB.Close(); err != nil {
-		log.Fatalln("bolt close failed:", err)
+		log.Println("bolt close failed:", err)
 	}
 }
 
