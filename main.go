@@ -120,6 +120,7 @@ func closeStoreOnSignal(s teian.SuggestionStore) {
 	}()
 }
 
+// App represents the Teian application and holds its dependencies.
 type App struct {
 	Suggestions teian.SuggestionStore
 	Conf        *teian.Conf
