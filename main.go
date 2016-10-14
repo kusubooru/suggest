@@ -43,7 +43,6 @@ const (
 Options:
 `
 	writeMessage         = `Do you have a suggestion on how to improve the site? Write it here!`
-	confContextKey       = "conf"
 	submitSuccessMessage = "Your suggestion has been submitted. Thank you for your feedback!"
 	submitFailureMessage = "Something broke! :'( Our developers were notified."
 )
