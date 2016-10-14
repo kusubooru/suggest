@@ -52,7 +52,7 @@ func (db *datastore) Create(username string, sugg *teian.Sugg) error {
 	return err
 }
 
-func (db *datastore) GetSugg(username string) ([]teian.Sugg, error) {
+func (db *datastore) OfUser(username string) ([]teian.Sugg, error) {
 	var suggs []teian.Sugg
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {
