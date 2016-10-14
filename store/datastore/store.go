@@ -1,36 +1,27 @@
 package datastore
 
 import (
-	"database/sql"
 	"log"
 	"time"
 
 	"github.com/boltdb/bolt"
-	// mysql driver
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/kusubooru/teian/store"
 )
 
 const suggsBucket = "suggestions"
 
 type datastore struct {
-	*sql.DB
 	boltdb *bolt.DB
 }
 
-// Open creates a database connection for the given driver and configuration,
-// opens the bolt database file and returns a new Store. The bolt database file
-// will be created if it does not exist.
-func Open(driver, config, boltFile string) store.Store {
-	db := openDB(driver, config)
+// Open opens the bolt database file and returns a new Store. The bolt database
+// file will be created if it does not exist.
+func Open(boltFile string) store.Store {
 	boltdb := openBolt(boltFile)
-	return &datastore{db, boltdb}
+	return &datastore{boltdb}
 }
 
 func (db *datastore) Close() {
-	if err := db.DB.Close(); err != nil {
-		log.Fatalln("database close failed:", err)
-	}
 	if err := db.boltdb.Close(); err != nil {
 		log.Fatalln("bolt close failed:", err)
 	}
@@ -54,35 +45,4 @@ func openBolt(file string) *bolt.DB {
 		log.Fatalln("bolt bucket creation failed:", err)
 	}
 	return db
-}
-
-// openDB opens a new database connection with the specified driver and
-// connection string.
-func openDB(driver, config string) *sql.DB {
-	db, err := sql.Open(driver, config)
-	if err != nil {
-		log.Fatalln("database connection failed:", err)
-	}
-	if driver == "mysql" {
-		// per issue https://github.com/go-sql-driver/mysql/issues/257
-		db.SetMaxIdleConns(0)
-	}
-	if err := pingDatabase(db); err != nil {
-		log.Fatalln("database ping attempts failed:", err)
-	}
-	return db
-}
-
-// helper function to ping the database with backoff to ensure a connection can
-// be established before we proceed.
-func pingDatabase(db *sql.DB) (err error) {
-	for i := 0; i < 10; i++ {
-		err = db.Ping()
-		if err == nil {
-			return
-		}
-		log.Print("database ping failed. retry in 1s")
-		time.Sleep(time.Second)
-	}
-	return
 }
