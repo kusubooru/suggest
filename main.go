@@ -79,8 +79,8 @@ func main() {
 	}
 
 	app := &App{
-		Shimmie: shim,
-		Store:   s,
+		Shimmie:     shim,
+		Suggestions: s,
 		Conf: &teian.Conf{
 			Title:       common.Title,
 			AnalyticsID: common.AnalyticsID,
@@ -122,9 +122,9 @@ func closeStoreOnSignal(s teian.SuggStore) {
 }
 
 type App struct {
-	Store   teian.SuggStore
-	Conf    *teian.Conf
-	Shimmie *shimmie.Shimmie
+	Suggestions teian.SuggStore
+	Conf        *teian.Conf
+	Shimmie     *shimmie.Shimmie
 }
 
 func (app *App) serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +141,7 @@ func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
 		return
 	}
-	suggs, err := app.Store.GetAllSugg()
+	suggs, err := app.Suggestions.GetAllSugg()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 	}
@@ -204,7 +204,7 @@ func (app *App) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("bad id provided: %v", err), http.StatusBadRequest)
 		return
 	}
-	err = app.Store.DeleteSugg(username, id)
+	err = app.Suggestions.DeleteSugg(username, id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("delete suggestion failed: %v", err), http.StatusInternalServerError)
 		return
@@ -279,7 +279,7 @@ func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and store suggestion
-	err := app.Store.CreateSugg(user.Name, &teian.Sugg{Text: text})
+	err := app.Suggestions.CreateSugg(user.Name, &teian.Sugg{Text: text})
 	if err != nil {
 		app.render(w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
 	}
