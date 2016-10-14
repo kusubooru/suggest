@@ -23,7 +23,11 @@ func (db *boltstore) Create(username string, sugg *teian.Suggestion) error {
 
 		// get current value and decode
 		value := b.Get([]byte(username))
-		buf.Write(value)
+
+		if _, werr := buf.Write(value); werr != nil {
+			return fmt.Errorf("could not write 'Create value' to buffer: %v", werr)
+		}
+
 		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
 			// If err is anything else except io.EOF (empty value) we return.
 			if err != io.EOF {
@@ -57,7 +61,11 @@ func (db *boltstore) OfUser(username string) ([]teian.Suggestion, error) {
 	buf := bytes.Buffer{}
 	err := db.View(func(tx *bolt.Tx) error {
 		value := tx.Bucket([]byte(suggestionsBucket)).Get([]byte(username))
-		buf.Write(value)
+
+		if _, werr := buf.Write(value); werr != nil {
+			return fmt.Errorf("could not write 'OfUser value' to buffer: %v", werr)
+		}
+
 		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
 			return fmt.Errorf("could not decode suggestions %v", err)
 		}
@@ -72,7 +80,11 @@ func (db *boltstore) Delete(username string, id uint64) error {
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(suggestionsBucket))
 		value := b.Get([]byte(username))
-		buf.Write(value)
+
+		if _, werr := buf.Write(value); werr != nil {
+			return fmt.Errorf("could not write 'Delete value' to buffer: %v", werr)
+		}
+
 		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
 			return fmt.Errorf("could not decode suggestions %v", err)
 		}
@@ -104,7 +116,10 @@ func (db *boltstore) All() ([]teian.Suggestion, error) {
 		return b.ForEach(func(k, v []byte) error {
 			var userSuggs []teian.Suggestion
 			buf.Reset()
-			buf.Write(v)
+			if _, werr := buf.Write(v); werr != nil {
+				return fmt.Errorf("could not write 'All value' to buffer: %v", werr)
+			}
+
 			if err := gob.NewDecoder(&buf).Decode(&userSuggs); err != nil {
 				return fmt.Errorf("could not decode suggestions of %q: %v", k, err)
 			}
