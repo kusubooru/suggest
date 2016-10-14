@@ -8,14 +8,14 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-const suggsBucket = "suggestions"
+const suggestionsBucket = "suggestions"
 
 type datastore struct {
 	boltdb *bolt.DB
 }
 
-// Open opens the bolt database file and returns a new SuggStore. The bolt
-// database file will be created if it does not exist.
+// Open opens the bolt database file and returns a new SuggestionStore. The
+// bolt database file will be created if it does not exist.
 func Open(boltFile string) teian.SuggestionStore {
 	boltdb := openBolt(boltFile)
 	return &datastore{boltdb}
@@ -36,7 +36,7 @@ func openBolt(file string) *bolt.DB {
 		log.Fatalln("bolt open failed:", err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err = tx.CreateBucketIfNotExists([]byte(suggsBucket)); err != nil {
+		if _, err = tx.CreateBucketIfNotExists([]byte(suggestionsBucket)); err != nil {
 			return err
 		}
 		return nil

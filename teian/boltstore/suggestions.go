@@ -19,7 +19,7 @@ func (db *datastore) Create(username string, sugg *teian.Suggestion) error {
 		buf := bytes.Buffer{}
 
 		// get bucket
-		b := tx.Bucket([]byte(suggsBucket))
+		b := tx.Bucket([]byte(suggestionsBucket))
 
 		// get current value and decode
 		value := b.Get([]byte(username))
@@ -56,7 +56,7 @@ func (db *datastore) OfUser(username string) ([]teian.Suggestion, error) {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {
-		value := tx.Bucket([]byte(suggsBucket)).Get([]byte(username))
+		value := tx.Bucket([]byte(suggestionsBucket)).Get([]byte(username))
 		buf.Write(value)
 		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
 			return fmt.Errorf("could not decode suggestions %v", err)
@@ -70,7 +70,7 @@ func (db *datastore) Delete(username string, id uint64) error {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(suggsBucket))
+		b := tx.Bucket([]byte(suggestionsBucket))
 		value := b.Get([]byte(username))
 		buf.Write(value)
 		if err := gob.NewDecoder(&buf).Decode(&suggs); err != nil {
@@ -98,7 +98,7 @@ func (db *datastore) All() ([]teian.Suggestion, error) {
 	var suggs []teian.Suggestion
 	buf := bytes.Buffer{}
 	err := db.boltdb.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(suggsBucket))
+		b := tx.Bucket([]byte(suggestionsBucket))
 
 		// Iterate over items in sorted key order.
 		if err := b.ForEach(func(k, v []byte) error {
