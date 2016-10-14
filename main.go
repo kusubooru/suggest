@@ -150,11 +150,11 @@ func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
 	t := r.FormValue("t")
 	o := r.FormValue("o")
 
-	suggs = searchSuggs(suggs, u, t, o)
+	suggs = filterSuggestions(suggs, u, t, o)
 	app.render(w, listTmpl, suggs)
 }
 
-func searchSuggs(suggs []teian.Suggestion, username, text, order string) []teian.Suggestion {
+func filterSuggestions(suggs []teian.Suggestion, username, text, order string) []teian.Suggestion {
 	if len(suggs) == 0 || len(suggs) == 1 {
 		return suggs
 	}
