@@ -66,7 +66,7 @@ func (db *datastore) GetSugg(username string) ([]teian.Sugg, error) {
 	return suggs, err
 }
 
-func (db *datastore) DeleteSugg(username string, id uint64) error {
+func (db *datastore) Delete(username string, id uint64) error {
 	var suggs []teian.Sugg
 	buf := bytes.Buffer{}
 	err := db.boltdb.Update(func(tx *bolt.Tx) error {

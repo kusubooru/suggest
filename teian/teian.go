@@ -34,14 +34,14 @@ func (c Conf) SiteTitle() string {
 // SuggStore describes all the operations that need to access a storage for the
 // suggestions.
 type SuggStore interface {
-	// CreateSugg creates a new suggestion for a user.
+	// Create creates a new suggestion for a user.
 	Create(username string, sugg *Sugg) error
 	// GetSugg gets all the suggestions created by a user.
 	GetSugg(username string) ([]Sugg, error)
 	// GetSugg gets all the suggestions.
 	GetAllSugg() ([]Sugg, error)
-	// DeleteSugg deletes a user's suggestion.
-	DeleteSugg(username string, id uint64) error
+	// Delete deletes a user's suggestion.
+	Delete(username string, id uint64) error
 
 	// Close releases all database resources.
 	Close()

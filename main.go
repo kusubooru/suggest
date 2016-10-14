@@ -204,7 +204,7 @@ func (app *App) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("bad id provided: %v", err), http.StatusBadRequest)
 		return
 	}
-	err = app.Suggestions.DeleteSugg(username, id)
+	err = app.Suggestions.Delete(username, id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("delete suggestion failed: %v", err), http.StatusInternalServerError)
 		return
