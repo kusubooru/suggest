@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -14,9 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/context"
-
-	"github.com/kusubooru/teian/shimmie"
+	"github.com/kusubooru/shimmie"
+	shimstore "github.com/kusubooru/shimmie/store"
 	"github.com/kusubooru/teian/store"
 	"github.com/kusubooru/teian/store/datastore"
 	"github.com/kusubooru/teian/teian"
@@ -25,15 +23,17 @@ import (
 //go:generate go run generate/version.go
 
 var (
-	httpAddr = flag.String("http", "localhost:8080", "HTTP listen address")
-	dbDriver = flag.String("dbdriver", "mysql", "database driver")
-	dbConfig = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
-	boltFile = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
-	loginURL = flag.String("loginurl", "/suggest/login", "login URL path to redirect to")
-	writeMsg = flag.String("writemsg", writeMessage, "message that appears on new suggestion screen")
-	version  = flag.Bool("v", false, "print program version")
-	certFile = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
-	keyFile  = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
+	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
+	dbDriver  = flag.String("dbdriver", "mysql", "database driver")
+	dbConfig  = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
+	boltFile  = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
+	loginURL  = flag.String("loginurl", "/suggest/login", "login URL path to redirect to")
+	writeMsg  = flag.String("writemsg", writeMessage, "message that appears on new suggestion screen")
+	version   = flag.Bool("v", false, "print program version")
+	certFile  = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
+	keyFile   = flag.String("tlskey", "", "TLS private key in PEM format.  Must be used together with -tlscert")
+	imagePath = flag.String("imagepath", "", "path where images are stored")
+	thumbPath = flag.String("thumbpath", "", "path where image thumbnails are stored")
 	// Set after flag parsing based on certFile & keyFile.
 	useTLS bool
 )
@@ -67,26 +67,36 @@ func main() {
 	}
 
 	// create database connection and store
-	s := datastore.Open(*dbDriver, *dbConfig, *boltFile)
+	s := datastore.Open(*boltFile)
 	closeStoreOnSignal(s)
-	// add store to context
-	ctx := store.NewContext(context.Background(), s)
-	// get app conf values
-	conf, cerr := store.GetConf(ctx)
-	if cerr != nil {
-		s.Close()
-		log.Fatalln("could not get conf:", cerr)
-	}
-	conf.WriteMsg = *writeMsg
-	// add conf to context
-	ctx = context.WithValue(ctx, confContextKey, conf)
 
-	http.Handle("/suggest", shimmie.Auth(ctx, serveIndex, *loginURL))
-	http.Handle("/suggest/admin", shimmie.Auth(ctx, serveAdmin, *loginURL))
-	http.Handle("/suggest/admin/delete", shimmie.Auth(ctx, handleDelete, *loginURL))
-	http.Handle("/suggest/submit", shimmie.Auth(ctx, handleSubmit, *loginURL))
-	http.Handle("/suggest/login", newHandler(ctx, serveLogin))
-	http.Handle("/suggest/login/submit", newHandler(ctx, handleLogin))
+	// open store with new database connection and create new Shimmie
+	shim := shimmie.New(*imagePath, *thumbPath, shimstore.Open(*dbDriver, *dbConfig))
+
+	// get common conf
+	common, cerr := shim.Store.GetCommon()
+	if cerr != nil {
+		log.Fatalln("could not get common conf:", cerr)
+	}
+
+	app := &App{
+		Shimmie: shim,
+		Store:   s,
+		Conf: &teian.Conf{
+			Title:       common.Title,
+			AnalyticsID: common.AnalyticsID,
+			Description: common.Description,
+			Keywords:    common.Keywords,
+			WriteMsg:    *writeMsg,
+		},
+	}
+
+	http.Handle("/suggest", shim.Auth(app.serveIndex, *loginURL))
+	http.Handle("/suggest/admin", shim.Auth(app.serveAdmin, *loginURL))
+	http.Handle("/suggest/admin/delete", shim.Auth(app.handleDelete, *loginURL))
+	http.Handle("/suggest/submit", shim.Auth(app.handleSubmit, *loginURL))
+	http.Handle("/suggest/login", http.HandlerFunc(app.serveLogin))
+	http.Handle("/suggest/login/submit", http.HandlerFunc(app.handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
 
 	if useTLS {
@@ -112,33 +122,27 @@ func closeStoreOnSignal(s store.Store) {
 	}()
 }
 
-type ctxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
-
-func newHandler(ctx context.Context, fn ctxHandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		fn(ctx, w, r)
-	}
+type App struct {
+	Store   store.Store
+	Conf    *teian.Conf
+	Shimmie *shimmie.Shimmie
 }
 
-func serveIndex(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	render(ctx, w, suggestionTmpl, nil)
+func (app *App) serveIndex(w http.ResponseWriter, r *http.Request) {
+	app.render(w, suggestionTmpl, nil)
 }
 
-func serveLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	render(ctx, w, loginTmpl, nil)
+func (app *App) serveLogin(w http.ResponseWriter, r *http.Request) {
+	app.render(w, loginTmpl, nil)
 }
 
-func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	user, ok := ctx.Value("user").(*teian.User)
-	if !ok {
-		http.Redirect(w, r, *loginURL, http.StatusFound)
-		return
-	}
-	if user.Admin != "Y" {
+func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
+	user, ok := r.Context().Value("user").(*shimmie.User)
+	if !ok || user.Admin != "Y" {
 		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
 		return
 	}
-	suggs, err := store.GetAllSugg(ctx)
+	suggs, err := app.Store.GetAllSugg()
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 	}
@@ -148,7 +152,7 @@ func serveAdmin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	o := r.FormValue("o")
 
 	suggs = searchSuggs(suggs, u, t, o)
-	render(ctx, w, listTmpl, suggs)
+	app.render(w, listTmpl, suggs)
 }
 
 func searchSuggs(suggs []teian.Sugg, username, text, order string) []teian.Sugg {
@@ -179,18 +183,14 @@ func searchSuggs(suggs []teian.Sugg, username, text, order string) []teian.Sugg 
 	return suggs
 }
 
-func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (app *App) handleDelete(w http.ResponseWriter, r *http.Request) {
 	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
-	user, ok := ctx.Value("user").(*teian.User)
-	if !ok {
-		http.Redirect(w, r, *loginURL, http.StatusFound)
-		return
-	}
-	if user.Admin != "Y" {
+	user, ok := r.Context().Value("user").(*shimmie.User)
+	if !ok || user.Admin != "Y" {
 		http.Error(w, "You are not authorized to perform this action.", http.StatusUnauthorized)
 		return
 	}
@@ -205,7 +205,7 @@ func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("bad id provided: %v", err), http.StatusBadRequest)
 		return
 	}
-	err = store.DeleteSugg(ctx, username, id)
+	err = app.Store.DeleteSugg(username, id)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("delete suggestion failed: %v", err), http.StatusInternalServerError)
 		return
@@ -213,7 +213,7 @@ func handleDelete(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/suggest/admin", http.StatusFound)
 }
 
-func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -221,10 +221,10 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	user, err := store.GetUser(ctx, username)
+	user, err := app.Shimmie.GetUser(username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			render(ctx, w, loginTmpl, "User does not exist.")
+			app.render(w, loginTmpl, "User does not exist.")
 			return
 		}
 		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
@@ -232,10 +232,9 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
-	hash := md5.Sum([]byte(username + password))
-	passwordHash := fmt.Sprintf("%x", hash)
+	passwordHash := shimmie.PasswordHash(username, password)
 	if user.Pass != passwordHash {
-		render(ctx, w, loginTmpl, "Username and password do not match.")
+		app.render(w, loginTmpl, "Username and password do not match.")
 		return
 	}
 	addr := strings.Split(r.RemoteAddr, ":")[0]
@@ -246,19 +245,23 @@ func handleLogin(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 }
 
 func handleLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Use POST to logout.", http.StatusMethodNotAllowed)
+		return
+	}
 	shimmie.SetCookie(w, "shm_user", "")
 	shimmie.SetCookie(w, "shm_session", "")
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
-func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	// only accept POST method
 	if r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
 	// get user from context
-	user, ok := ctx.Value("user").(*teian.User)
+	user, ok := r.Context().Value("user").(*shimmie.User)
 	if !ok {
 		http.Redirect(w, r, *loginURL, http.StatusFound)
 		return
@@ -277,16 +280,16 @@ func handleSubmit(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create and store suggestion
-	err := store.CreateSugg(ctx, user.Name, &teian.Sugg{Text: text})
+	err := app.Store.CreateSugg(user.Name, &teian.Sugg{Text: text})
 	if err != nil {
-		render(ctx, w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
+		app.render(w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
 	}
 
-	render(ctx, w, submitTmpl, result{Type: "success", Msg: submitSuccessMessage})
+	app.render(w, submitTmpl, result{Type: "success", Msg: submitSuccessMessage})
 
 }
 
-func renderSimple(w http.ResponseWriter, t *template.Template, data interface{}) {
+func render(w http.ResponseWriter, t *template.Template, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
 		msg := fmt.Sprintln("could not render template:", err)
 		log.Print(msg)
@@ -295,28 +298,21 @@ func renderSimple(w http.ResponseWriter, t *template.Template, data interface{})
 	}
 }
 
-func render(ctx context.Context, w http.ResponseWriter, t *template.Template, data interface{}) {
-	conf, ok := ctx.Value(confContextKey).(*teian.Conf)
-	if msg := "conf not in context"; !ok {
-		log.Print(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
-
-	renderSimple(w, t, struct {
+func (app *App) render(w http.ResponseWriter, t *template.Template, data interface{}) {
+	render(w, t, struct {
 		Data interface{}
 		Conf *teian.Conf
 	}{
 		Data: data,
-		Conf: conf,
+		Conf: app.Conf,
 	})
 }
 
 var (
-	suggestionTmpl = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + suggestionTemplate))
-	submitTmpl     = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + submitTemplate))
-	listTmpl       = template.Must(template.New("").Parse(baseTemplate + subnavTemplate + toolbarTemplate + listTemplate))
-	loginTmpl      = template.Must(template.New("").Parse(baseTemplate + loginTemplate))
+	suggestionTmpl = template.Must(template.New("suggestionTmpl").Parse(baseTemplate + subnavTemplate + suggestionTemplate))
+	submitTmpl     = template.Must(template.New("submitTmpl").Parse(baseTemplate + subnavTemplate + submitTemplate))
+	listTmpl       = template.Must(template.New("listTmpl").Parse(baseTemplate + subnavTemplate + toolbarTemplate + listTemplate))
+	loginTmpl      = template.Must(template.New("loginTmpl").Parse(baseTemplate + loginTemplate))
 )
 
 const (
