@@ -20,6 +20,8 @@ import (
 	"github.com/kusubooru/teian/teian/boltstore"
 )
 
+const theVersion = "1.0.0-beta"
+
 var (
 	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
 	dbDriver  = flag.String("dbdriver", "mysql", "database driver")
