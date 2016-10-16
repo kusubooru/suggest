@@ -87,6 +87,7 @@ func main() {
 			Description: common.Description,
 			Keywords:    common.Keywords,
 			WriteMsg:    *writeMsg,
+			Version:     theVersion,
 		},
 	}
 
@@ -513,7 +514,16 @@ const (
 			border-color: #ebccd1;
 		}
 
+		footer {
+			color: #ccc;
+			font-size: 0.9em;
+			padding-left: 0.5em;
+			padding-top: 1em;
+		}
 
+		footer a {
+			font-size: 0.9em;
+		}
 
 	</style>
 </head>
@@ -522,6 +532,10 @@ const (
 	{{block "subnav" .}}{{end}}
 	{{block "toolbar" .}}{{end}}
 	{{block "content" .}}{{end}}
+	<footer>
+		{{block "footer" .}}{{end}}
+		<em>Served by <a href="https://github.com/kusubooru/teian">teian</a> v{{.Conf.Version}}</em>
+	</footer>
 </body>
 </html>
 `
