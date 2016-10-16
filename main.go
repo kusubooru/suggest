@@ -20,7 +20,7 @@ import (
 	"github.com/kusubooru/teian/teian/boltstore"
 )
 
-const theVersion = "1.0.0-beta"
+const theVersion = "1.0.0"
 
 var (
 	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
