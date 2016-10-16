@@ -27,7 +27,13 @@ teian -http="localhost:8081"
   -tlskey="/<TLS private key path>/privkey.pem"
 ```
 
-## Caveats
+## Notes
 
-The program is assuming Shimmie v2.5.1 authentication system and database
-schema on MySQL database.
+The program needs data from MySQL for users, authentication and some common
+configuration. This is handled by
+[kusubooru/shimmie](https://github.com/kusubooru/shimmie) which is vendored. The database
+schema should be the same as the one used in v2.5.1 of the
+[Shimmie2](https://github.com/shish/shimmie2) project.
+
+The suggestions are stored in a file teian.db using
+[boltdb](https://github.com/boltdb/bolt).
