@@ -138,7 +138,7 @@ func (app *App) serveLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) serveAdmin(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(*shimmie.User)
+	user, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok || user.Admin != "Y" {
 		http.Error(w, "You are not authorized to view this page.", http.StatusUnauthorized)
 		return
