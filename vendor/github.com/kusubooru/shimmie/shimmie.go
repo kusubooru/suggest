@@ -1,6 +1,7 @@
 package shimmie
 
 import (
+	"database/sql"
 	"io"
 	"strings"
 	"time"
@@ -47,8 +48,15 @@ func New(imgPath, thumbPath string, s Store) *Shimmie {
 
 // Store describes all the operations that need to access database storage.
 type Store interface {
+	// SQLDB returns the encapsulated *sql.DB, mostly used for testing.
+	SQLDB() *sql.DB
+
 	// GetUser gets a user by unique username.
 	GetUser(username string) (*User, error)
+	// CreateUser creates a new user and returns their ID.
+	CreateUser(*User) error
+	// DeleteUser deletes a user based on their ID.
+	DeleteUser(int64) error
 
 	// GetConfig gets shimmie config values.
 	GetConfig(keys ...string) (map[string]string, error)
@@ -80,6 +88,26 @@ type Store interface {
 	// that were done by a contributor on an owner's image, per image. It is
 	// used to fetch data for the "Tag Approval" page.
 	GetContributedTagHistory(imageOwnerUsername string) ([]ContributedTagHistory, error)
+
+	// GetAlias returns an alias based on its old tag.
+	GetAlias(oldTag string) (*Alias, error)
+	// CreateAlias creates a new alias.
+	CreateAlias(alias *Alias) error
+	// DeleteAlias deletes an alias based on its old tag.
+	DeleteAlias(oldTag string) error
+	// CountAlias returns how many alias entries exit in the database.
+	CountAlias() (int, error)
+	// GetAllAlias returns alias entries of the database based on a limit and
+	// an offset. If limit < 0, CountAlias will also be executed to get the
+	// maximum limit and return all alias entries. Offset still works in this
+	// case. For example, assuming 10 entries, GetAllAlias(-1, 0), will return
+	// all 10 entries and GetAllAlias(-1, 8) will return the last 2 entries.
+	GetAllAlias(limit, offset int) ([]Alias, error)
+	// FindAlias returns all alias matching an oldTag or a newTag or both.
+	FindAlias(oldTag, newTag string) ([]Alias, error)
+
+	// Close closes the connection with the database.
+	Close() error
 }
 
 // SCoreLog represents a log message in the shimmie log that is stored in the
@@ -134,7 +162,7 @@ type Image struct {
 
 // User represents a shimmie user.
 type User struct {
-	ID       int
+	ID       int64
 	Name     string
 	Pass     string
 	JoinDate *time.Time
@@ -179,4 +207,10 @@ type ContributedTagHistory struct {
 	TaggerIP   string
 	Tags       string
 	DateSet    *time.Time
+}
+
+// Alias is an alias of an old tag to a new tag.
+type Alias struct {
+	OldTag string
+	NewTag string
 }

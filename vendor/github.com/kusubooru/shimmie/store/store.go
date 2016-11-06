@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 
 type datastore struct {
 	*sql.DB
+}
+
+func (db datastore) SQLDB() *sql.DB {
+	return db.DB
 }
 
 // Open creates a database connection for the given driver and configuration.
@@ -49,4 +54,33 @@ func pingDatabase(db *sql.DB) (err error) {
 		time.Sleep(time.Second)
 	}
 	return
+}
+
+func (db datastore) Close() error {
+	return db.DB.Close()
+}
+
+// Tx allows to perform a function in a transaction. It detects error and panic
+// and in that case it rollbacks otherwise it commits the transaction.
+func Tx(db *sql.DB, txFunc func(*sql.Tx) error) (err error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			switch p := p.(type) {
+			case error:
+				err = p
+			default:
+				err = fmt.Errorf("%s", p)
+			}
+		}
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		err = tx.Commit()
+	}()
+	return txFunc(tx)
 }
