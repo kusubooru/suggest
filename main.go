@@ -190,7 +190,7 @@ func (app *App) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
-	user, ok := r.Context().Value("user").(*shimmie.User)
+	user, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok || user.Admin != "Y" {
 		http.Error(w, "You are not authorized to perform this action.", http.StatusUnauthorized)
 		return
@@ -262,7 +262,7 @@ func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// get user from context
-	user, ok := r.Context().Value("user").(*shimmie.User)
+	user, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok {
 		http.Redirect(w, r, *loginURL, http.StatusFound)
 		return
