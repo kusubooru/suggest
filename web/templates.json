@@ -1,0 +1,17 @@
+{
+    "Suffix": "Template",
+    "Templates": [{
+        "Name": "suggestionTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "suggestion.tmpl"]
+    }, {
+        "Name": "submitTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "submit.tmpl"]
+    }, {
+        "Name": "loginTmpl",
+        "Files": ["base.tmpl", "login.tmpl"]
+    }, {
+        "Name": "adminTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "toolbar.tmpl", "admin.tmpl"]
+    }]
+
+}

@@ -1,0 +1,13 @@
+{{define "content"}}
+{{ range $k, $v := .Data }}
+	<div class="suggestion">
+		<span>{{$v.FmtCreated}} by <a href="/user/{{$v.Username}}">{{$v.Username}}</a></span>
+		<form method="post" action="/suggest/admin/delete">
+			<input type="hidden" name="username" value="{{$v.Username}}">
+			<input type="hidden" name="id" value="{{$v.ID}}">
+			<input type="submit" value="Delete">
+		</form>
+		<textarea cols="80" readonly>{{$v.Text}}</textarea>
+	</div>
+{{ end }}
+{{end}}

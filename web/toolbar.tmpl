@@ -1,0 +1,17 @@
+{{define "toolbar"}}
+<div class="toolbar">
+	<form method="get" action="/suggest/admin">
+		<input type="text" name="u" placeholder="Username">
+		<input type="text" name="t" placeholder="Text">
+		<label for="order">Order By</label>
+		<select id="order" name="o">
+			<option value="dd">Date Desc</option>
+			<option value="da">Date Asc</option>
+			<option value="ud">Username Desc</option>
+			<option value="ua">Username Asc</option>
+		</select>
+	    <button type="submit">Search</button>
+		<input type="reset" value="Reset">
+	</form>
+</div>
+{{end}}

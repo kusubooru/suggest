@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>suggest</title>
+	<script type='text/javascript'>
+		var _gaq = _gaq || [];
+		_gaq.push(['_setAccount', '{{.Conf.AnalyticsID}}']);
+		_gaq.push(['_trackPageview']);
+		(function() {
+		  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+		})();
+	</script>
+	<meta name="description" content="{{.Conf.Description}}">
+	<meta name="keywords" content="{{.Conf.Keywords}}">
+	<style>
+		* {
+			font-size: 16px;
+			line-height: 1.2;
+			font-family: Verdana, Geneva, sans-serif;
+		}
+		a:link {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		a:visited {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		a:hover {
+			color:#33CFFF;
+			text-decoration:none;
+		}
+		a:active {
+			color:#006FFA;
+			text-decoration:none;
+		}
+
+		p, a, span {font-size: 120%;}
+
+		body {
+			list-style-type: none;
+			padding-top: 0;
+			margin-top: 0;
+		}
+
+		#site-title {
+			font-size: 133%;
+			padding: 0.5em;
+			margin: 0;
+		}
+
+		#subnav {
+		    background: #f6f6f6;
+			padding-top: 1em;
+			padding-bottom: 1em;
+			border-top: 1px #ebebeb solid;
+			border-bottom: 1px #ebebeb solid;
+		}
+
+		#subnav a {
+		    padding: 0.5em;
+		}
+
+		#subnav subnav-button-link {
+		    padding: 0.5em;
+		}
+
+		.subnav-button-form {
+			display: inline;
+		}
+
+		.subnav-button-link {
+			background: none!important;
+			border: none;
+			padding: 0!important;
+			font: inherit;
+			font-size: 120%;
+			cursor: pointer;
+			color: #006FFA;
+			display: inline;
+		}
+
+		.subnav-button-link:visited {
+			color:#006FFA;
+			text-decoration:none;
+		}
+		.subnav-button-link:hover {
+			color:#33CFFF;
+			text-decoration:none;
+		}
+		.subnav-button-link:active {
+			color:#006FFA;
+			text-decoration:none;
+		}
+
+		#login-form label, #login-form input, #login-form button, #login-form em {
+			padding: 0.5em;
+			display: block;
+			font-size: 120%;
+			line-height:1.2;
+		}
+
+		#login-form button {
+			margin-top: 0.5em;
+		}
+
+		#login-form h1 {
+			padding: 0.5em;
+			font-size: 120%;
+		}
+
+		.toolbar {
+			padding: 0.5em;
+		}
+		.toolbar input, .toolbar button {
+			font-size: 120%;
+		}
+
+		.suggestion {
+			padding: 0.5em;
+			border-top: 1px #ebebeb solid;
+			border-bottom: 1px #ebebeb solid;
+			border-left: 0.3em #006FFA solid;
+			border-top-left-radius: 0.3em;
+			border-bottom-left-radius: 0.3em;
+			line-height: 200%;
+		}
+
+		.suggestion form {
+			display: inline;
+		}
+
+		.suggestion textarea {
+			display: block;
+			font-size: 120%;
+			line-height:1.2;
+		}
+		.suggestion:nth-of-type(even) {
+		    background: #f6f6f6;
+		}
+
+		.suggestion-form {
+			padding: 0.5em;
+			line-height: 200%;
+		}
+
+		textarea {
+			width: 70%;
+		}
+		@media (max-width: 768px) {
+			textarea {
+				width: 100%;
+			}
+		}
+
+		.suggestion-form input[type=submit] {
+			padding: 0.5em;
+			margin-top: 0.5em;
+			display: block;
+		}
+
+		.alert {
+			border-radius: 4px;
+			padding: 1em;
+			margin-top: 0.5em;
+			margin-bottom: 0.5em;
+			font-size: 120%;
+			width: 70%;
+		}
+		.alert strong {
+			font-size: inherit;
+		}
+		@media (max-width: 768px) {
+			.alert{
+				width: 90%;
+				padding-left:5%;
+				padding-right:5%;
+			}
+		}
+
+		.alert-success {
+			color: #3c763d;
+			background-color: #dff0d8;
+			border-color: #d6e9c6;
+		}
+
+		.alert-error {
+			color: #a94442;
+			background-color: #f2dede;
+			border-color: #ebccd1;
+		}
+
+		footer {
+			color: #ccc;
+			font-size: 0.9em;
+			padding-left: 0.5em;
+			padding-top: 1em;
+		}
+
+		footer a {
+			font-size: 0.9em;
+		}
+
+	</style>
+</head>
+<body>
+	<h1 id="site-title"><a href="/post/list">{{.Conf.SiteTitle}}</a></h1>
+	{{block "subnav" .}}{{end}}
+	{{block "toolbar" .}}{{end}}
+	{{block "content" .}}{{end}}
+	<footer>
+		{{block "footer" .}}{{end}}
+		<em>Served by <a href="https://github.com/kusubooru/teian">teian</a> v{{.Conf.Version}}</em>
+	</footer>
+</body>
+</html>
+

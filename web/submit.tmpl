@@ -1,0 +1,18 @@
+{{define "content"}}
+{{ if .Data.Err }}
+<!-- Error -->
+<!-- .Data.Err  -->
+<!--  -->
+{{end}}
+{{ if .Data.Msg }}
+<div class="alert alert-{{.Data.Type}}">
+	<strong>
+	{{if eq .Data.Type "success"}}
+	Success:
+	{{else}}
+	Error:
+	{{end}}
+	</strong>{{.Data.Msg}}
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,9 @@
+{{define "content"}}
+<div class="suggestion-form">
+	<form method="post" action="/suggest/submit">
+		<p>{{.Conf.WriteMsg}}</p>
+		<textarea class="large" rows="20" cols="80" name="text" placeholder="Write your suggestion here."></textarea>
+		<input type="submit">
+	</form>
+</div>
+{{end}}
