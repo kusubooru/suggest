@@ -22,7 +22,7 @@ import (
 
 //go:generate go run generate/templates.go
 
-const theVersion = "1.0.0"
+var theVersion = "devel"
 
 var (
 	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
