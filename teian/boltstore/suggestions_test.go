@@ -82,8 +82,7 @@ func TestAll_Delete(t *testing.T) {
 
 	// test delete
 	for i := 1; i <= 10; i++ {
-		err := store.Delete(username1, uint64(i))
-		if err != nil {
+		if err = store.Delete(username1, uint64(i)); err != nil {
 			t.Errorf("store.Delete(%q, %d) failed: %v", username1, i, err)
 		}
 	}
