@@ -33,6 +33,9 @@ type SuggestionStore interface {
 	// Delete deletes a user's suggestion.
 	Delete(username string, id uint64) error
 
+	NewAlias(username string, alias *Alias) error
+	GetAliasOfUser(username string) ([]*Alias, error)
+
 	// Close releases all database resources.
 	Close()
 }

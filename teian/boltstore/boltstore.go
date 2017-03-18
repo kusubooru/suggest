@@ -8,7 +8,10 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-const suggestionsBucket = "suggestions"
+const (
+	suggestionsBucket = "suggestions"
+	aliasBucket       = "alias"
+)
 
 type boltstore struct {
 	*bolt.DB
@@ -38,6 +41,10 @@ func openBolt(file string) *bolt.DB {
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(suggestionsBucket))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte(aliasBucket))
 		return err
 	})
 	if err != nil {
