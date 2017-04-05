@@ -29,12 +29,7 @@ package main
 
 import (
 	"html/template"
-	"strings"
 )
-
-var fns = template.FuncMap{
-	"join": strings.Join,
-}
 
 var (
 	{{range .Templates}}

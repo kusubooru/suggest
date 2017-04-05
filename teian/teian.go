@@ -14,6 +14,7 @@ type Conf struct {
 	Keywords    string
 	WriteMsg    string
 	Version     string
+	LoginURL    string
 }
 
 // SiteTitle returns the Title capitalized.

@@ -90,7 +90,7 @@ func (db *boltstore) Delete(username string, id uint64) error {
 		}
 		i, s := teian.FindByID(suggs, id)
 		if s == nil {
-			return errors.New("entry does not exit")
+			return errors.New("entry does not exist")
 		}
 		// delete from slice
 		suggs = append(suggs[:i], suggs[i+1:]...)

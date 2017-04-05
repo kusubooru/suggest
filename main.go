@@ -9,10 +9,12 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kusubooru/shimmie"
 	"github.com/kusubooru/shimmie/store"
@@ -22,22 +24,28 @@ import (
 
 //go:generate go run generate/templates.go
 
-var theVersion = "devel"
-
 var (
-	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
-	dbDriver  = flag.String("dbdriver", "mysql", "database driver")
-	dbConfig  = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
-	boltFile  = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
-	loginURL  = flag.String("loginurl", "/suggest/login", "login URL path to redirect to")
-	writeMsg  = flag.String("writemsg", writeMessage, "message that appears on new suggestion screen")
-	version   = flag.Bool("v", false, "print program version")
-	certFile  = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
-	keyFile   = flag.String("tlskey", "", "TLS private key in PEM format. Must be used together with -tlscert")
-	imagePath = flag.String("imagepath", "", "path where images are stored")
-	thumbPath = flag.String("thumbpath", "", "path where image thumbnails are stored")
-	// Set after flag parsing based on certFile & keyFile.
-	useTLS bool
+	theVersion = "devel"
+	versionRx  = regexp.MustCompile(`\d.*`)
+	fns        = template.FuncMap{
+		"join": strings.Join,
+		"filterEmpty": func(s, filter string) string {
+			if s == "" {
+				return filter
+			}
+			return s
+		},
+		"formatTime": func(t time.Time) string {
+			return t.Format("January 2, 2006; 15:04")
+		},
+		"printv": func(version string) string {
+			// If version starts with a digit, add 'v'.
+			if versionRx.Match([]byte(version)) {
+				version = "v" + version
+			}
+			return version
+		},
+	}
 )
 
 const (
@@ -58,6 +66,21 @@ func usage() {
 }
 
 func main() {
+	var (
+		httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
+		dbDriver  = flag.String("dbdriver", "mysql", "database driver")
+		dbConfig  = flag.String("dbconfig", "", "username:password@(host:port)/database?parseTime=true")
+		boltFile  = flag.String("boltfile", "teian.db", "BoltDB database file to store suggestions")
+		loginURL  = flag.String("loginurl", "/suggest/login", "login URL path to redirect to")
+		writeMsg  = flag.String("writemsg", writeMessage, "message that appears on new suggestion screen")
+		version   = flag.Bool("v", false, "print program version")
+		certFile  = flag.String("tlscert", "", "TLS public key in PEM format.  Must be used together with -tlskey")
+		keyFile   = flag.String("tlskey", "", "TLS private key in PEM format. Must be used together with -tlscert")
+		imagePath = flag.String("imagepath", "", "path where images are stored")
+		thumbPath = flag.String("thumbpath", "", "path where image thumbnails are stored")
+		// Set after flag parsing based on certFile & keyFile.
+		useTLS bool
+	)
 	flag.Usage = usage
 	flag.Parse()
 	useTLS = *certFile != "" && *keyFile != ""
@@ -90,6 +113,7 @@ func main() {
 			Keywords:    common.Keywords,
 			WriteMsg:    *writeMsg,
 			Version:     theVersion,
+			LoginURL:    *loginURL,
 		},
 	}
 
@@ -266,7 +290,7 @@ func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
 	// get user from context
 	user, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok {
-		http.Redirect(w, r, *loginURL, http.StatusFound)
+		http.Redirect(w, r, app.Conf.LoginURL, http.StatusFound)
 		return
 	}
 	text := r.PostFormValue("text")
