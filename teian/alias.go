@@ -2,8 +2,28 @@ package teian
 
 import (
 	"sort"
+	"strings"
 	"time"
 )
+
+type AliasStatus int
+
+const (
+	AliasNew AliasStatus = iota
+	AliasApproved
+	AliasRejected
+)
+
+var aliasStatuses = [...]string{
+	"New",
+	"Approved",
+	"Rejected",
+}
+
+func (as AliasStatus) String() string   { return aliasStatuses[as] }
+func (as AliasStatus) IsNew() bool      { return as == AliasNew }
+func (as AliasStatus) IsApproved() bool { return as == AliasApproved }
+func (as AliasStatus) IsRejected() bool { return as == AliasRejected }
 
 // Alias represents an alias that a user can suggest to be created.
 type Alias struct {
@@ -13,6 +33,14 @@ type Alias struct {
 	New      string
 	Comment  string
 	Created  time.Time
+	Status   AliasStatus
+}
+
+// FmtCreated returns the creation time of the alias formatted as:
+//
+//     2006-01-02 15:04
+func (a *Alias) FmtCreated() string {
+	return a.Created.UTC().Format("2006-01-02 15:04")
 }
 
 // SearchAliasByID first sorts the slice of alias by id and then searches for
