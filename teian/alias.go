@@ -54,3 +54,38 @@ func SearchAliasByID(alias []*Alias, id uint64) (int, *Alias) {
 	}
 	return -1, nil
 }
+
+// FilterAliasByUsername returns alias whose Username contains the provided
+// username. It is used to filter a slice of alias by username.
+func FilterAliasByUsername(alias []*Alias, username string) []*Alias {
+	var f []*Alias
+	for _, s := range alias {
+		if strings.Contains(s.Username, username) {
+			f = append(f, s)
+		}
+	}
+	return f
+}
+
+// FilterAliasByComment returns alias whose Comment contains the provided text.
+// It is used to search a slice of alias and return only those whose comment
+// contains the given text.
+func FilterAliasByComment(alias []*Alias, text string) []*Alias {
+	var f []*Alias
+	for _, s := range alias {
+		if strings.Contains(s.Comment, text) {
+			f = append(f, s)
+		}
+	}
+	return f
+}
+
+func FilterAlias(alias []*Alias, filter string, filterFn func(int, string) bool) []*Alias {
+	var f []*Alias
+	for i := range alias {
+		if filterFn(i, filter) {
+			f = append(f, alias[i])
+		}
+	}
+	return f
+}
