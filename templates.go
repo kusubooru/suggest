@@ -244,6 +244,7 @@ const (
 		}
 
 	</style>
+	{{block "css" .}}{{end}}
 </head>
 <body>
 	<h1 id="site-title"><a href="/post/list">{{.Conf.SiteTitle}}</a></h1>
