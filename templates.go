@@ -4,18 +4,16 @@ package main
 
 import (
 	"html/template"
-	"strings"
 )
 
-var fns = template.FuncMap{
-	"join": strings.Join,
-}
-
 var (
-	adminTmpl      = template.Must(template.New("adminTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + toolbarTemplate + adminTemplate))
-	loginTmpl      = template.Must(template.New("loginTmpl").Funcs(fns).Parse(baseTemplate + loginTemplate))
-	submitTmpl     = template.Must(template.New("submitTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + submitTemplate))
-	suggestionTmpl = template.Must(template.New("suggestionTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + suggestionTemplate))
+	adminTmpl       = template.Must(template.New("adminTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + toolbarTemplate + adminTemplate))
+	aliasNewTmpl    = template.Must(template.New("aliasNewTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_newTemplate))
+	aliasSearchTmpl = template.Must(template.New("aliasSearchTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_searchTemplate))
+	aliasTmpl       = template.Must(template.New("aliasTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + aliasTemplate))
+	loginTmpl       = template.Must(template.New("loginTmpl").Funcs(fns).Parse(baseTemplate + loginTemplate))
+	submitTmpl      = template.Must(template.New("submitTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + submitTemplate))
+	suggestionTmpl  = template.Must(template.New("suggestionTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + suggestionTemplate))
 )
 
 const (
@@ -33,6 +31,232 @@ const (
 	</div>
 {{ end }}
 {{end}}
+`
+	aliasTemplate = `
+{{define "css"}}
+  <style>
+    .alias-form {
+      padding: 0.5em;
+      line-height: 200%;
+    }
+    .alias-form submit {
+      display: inline;
+      font-size: 120%;
+    }
+    .alias-form input {
+      font-size: 120%;
+    }
+  </style>
+{{ end }}
+{{define "content"}}
+  <div class="alias-form">
+    <form method="post" action="/suggest/alias/new/submit">
+      <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="comment" placeholder="Comment (Optional)">
+      <input type="submit" value="Suggest New Alias">
+    </form>
+  </div>
+{{ end }}
+`
+	alias_newTemplate = `
+{{define "css"}}
+  <style>
+    .alias-form {
+      padding: 0.5em;
+      line-height: 200%;
+    }
+    .alias-form submit {
+      display: inline;
+      font-size: 120%;
+    }
+    .alias-form input {
+      font-size: 120%;
+    }
+  </style>
+{{ end }}
+{{define "content"}}
+  <div class="alias-form">
+    <form method="post" action="/suggest/alias/new/submit">
+      <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="comment" placeholder="Comment (Optional)">
+      <input type="submit" value="Suggest New Alias">
+    </form>
+  </div>
+{{ end }}
+`
+	alias_searchTemplate = `
+{{define "css"}}
+  <style>
+    .alias input {
+      font-size: 120%;
+    }
+    .alias label {
+      font-size: 120%;
+    }
+    .alias form {
+      display: inline;
+    }
+    .alias {
+      padding: 0.5em;
+      border-top: 1px #ebebeb solid;
+      border-bottom: 1px #ebebeb solid;
+      border-left: 0.3em #006FFA solid;
+      border-top-left-radius: 0.3em;
+      border-bottom-left-radius: 0.3em;
+      line-height: 200%;
+    }
+    .alias:nth-of-type(even) {
+      background: #f6f6f6;
+    }
+    .alias-span {
+      padding: 0.5em;
+      font-size: 120%;
+      display: block;
+    }
+    .alias-body {
+      padding: 0.5em;
+    }
+    .alias-body label{
+      padding-right: 0.5em;
+    }
+    .alias-body-field {
+      display: inline-block;
+      padding: 0.5em;
+    }
+    .alias-body-field label {
+      display: inline-block;
+      width: 5em;
+      min-width:5em;
+    }
+    .alias-body-field.alias-body-field-tag input {
+      display: inline-block;
+      /*width: 6em;*/
+      width: 15em;
+    }
+    .alias-body-field.alias-body-field-comment input {
+      display: inline-block;
+      width: 15em;
+    }
+
+    .alias-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, td, th {
+      border: 1px solid #ddd;
+    }
+    td, th {
+      padding: 0.5em;
+    }
+    .alias-table-body tr:nth-child(odd) {
+      background: #f9f9f9;
+    }
+    .status {
+      width: 5px;
+      padding: 0;
+      margin: 0;
+      /*border: 0px;*/
+    }
+    .status-new {
+      background-color: #006ffa;
+      /*background-color: #1b809e; bootstrap */
+    }
+    .status-rejected {
+      /* background-color: #ce4844; bootstrap */
+      background-color: #fa0c00;
+    }
+    .status-approved {
+      /*background-color: #449d44; bootstrap */
+      background-color: #70fa00;
+    }
+    .center {
+      text-align: center;
+    }
+
+  </style>
+{{ end }}
+{{define "content"}}
+  <div class="toolbar">
+    <form method="get" action="/suggest/alias">
+      <input type="text" name="username" placeholder="Username">
+      <input type="text" name="comment" placeholder="Comment">
+      <label for="order">Order By</label>
+      <select id="order" name="order">
+        <option value="dd">Date Desc</option>
+        <option value="da">Date Asc</option>
+        <option value="ud">Username Desc</option>
+        <option value="ua">Username Asc</option>
+      </select>
+      <button type="submit">Search</button>
+      <input type="reset" value="Reset">
+    <a href="/suggest/alias/new">New</a>
+    </form>
+  </div>
+
+  <table class="alias-table">
+    <thead>
+      <tr>
+        <th class="status"></th>
+        <th>Alias</th>
+        <th>Comment</th>
+        <th>Submitter</th>
+        <th>Submitted At</th>
+      </tr>
+    </thead>
+    <tbody class="alias-table-body">
+      {{range .Data}}
+        <tr>
+		<td class="
+		status
+		{{if .Status.IsNew }}status-new{{end}}
+		{{if eq .Status 1}}status-approved{{end}}
+		{{if eq .Status 2}}status-rejected{{end}}"></td>
+          <td><a class="alias-link" href="/suggest/alias/{{.ID}}">{{.Old}} &rarr; {{.New}}</a></td>
+	  <td>{{.Comment}}</td>
+	  <td class="center"><a href="/user/{{.Username}}">{{.Username}}</a></td>
+	  <td class="center"><time>{{.FmtCreated}}</time></td>
+	</tr>
+      {{end}}
+    </tbody>
+  </table>
+
+  {{ range .Data }}
+    <div class="alias">
+      <h2 class="alias-span">{{.Old}} &rarr; {{.New}}</h2>
+      <span style="float:right"><time>{{.FmtCreated}}</time> by <a href="/user/{{.Username}}">{{.Username}}</a></span>
+      <!-- ><span>{{.FmtCreated}} by <a href="/user/{{.Username}}">{{.Username}}</a></span> -->
+      <span class="alias-span">Submitted At: {{.FmtCreated}}</span>
+      {{if .Comment}}<span class="alias-span">Comment: {{.Comment}}</span>{{end}}
+      <form method="post" action="/suggest/alias/delete">
+        <input type="hidden" name="username" value="{{.Username}}">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <input type="submit" value="Delete">
+      </form>
+      <div class="alias-body">
+	<span class="alias-span">{{.Old}} &rarr; {{.New}}</span>
+	{{if .Comment}}<span class="alias-span">Comment: {{.Comment}}</span>{{end}}
+        <div class="alias-body-field alias-body-field-tag">
+          <label for="old">Old Tag:</label>
+          <input id="old" type="text" name="old" value="{{.Old}}" readonly>
+	</div>
+        <div class="alias-body-field alias-body-field-tag">
+          <label for="new">New Tag:</label>
+          <input id="new" type="text" name="new" value="{{.New}}" readonly>
+	</div>
+        <div class="alias-body-field alias-body-field-comment">
+          <label for="comment">Comment:</label>
+          <input id="comment" type="text" name="comment" value="{{.Comment}}" readonly>
+	</div>
+        <div class="alias-body-field alias-body-field-comment">
+          <label for="explanation">Explanation:</label>
+          <input id="explanation" type="text" name="comment" value="{{.Comment}}" readonly>
+	</div>
+      </div>
+    </div>
+  {{ end }}
+{{ end }}
 `
 	baseTemplate = `
 <!DOCTYPE html>
@@ -278,6 +502,7 @@ const (
 {{define "subnav"}}
 <div id="subnav">
 	<a href="/suggest">New suggestion</a>
+	<a href="/suggest/alias">Suggested alias</a>
 	<form class="subnav-button-form" method="post" action="/suggest/logout">
 	     <input class="subnav-button-link" type="submit" value="Logout">
 	</form>

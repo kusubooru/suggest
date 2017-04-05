@@ -124,6 +124,10 @@ func main() {
 	http.Handle("/suggest/login", http.HandlerFunc(app.serveLogin))
 	http.Handle("/suggest/login/submit", http.HandlerFunc(app.handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
+	http.Handle("/suggest/alias", shim.Auth(app.serveAliasSearch, *loginURL))
+	http.Handle("/suggest/alias/", shim.Auth(app.serveAlias, *loginURL))
+	http.Handle("/suggest/alias/new", shim.Auth(app.serveAliasNew, *loginURL))
+	http.Handle("/suggest/alias/new/submit", shim.Auth(app.handleAliasNew, *loginURL))
 
 	if useTLS {
 		if err := http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, nil); err != nil {

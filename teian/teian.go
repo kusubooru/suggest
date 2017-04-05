@@ -42,6 +42,7 @@ type SuggestionStore interface {
 	AllAlias() ([]*Alias, error)
 	// DeleteAlias deletes a user's alias.
 	DeleteAlias(username string, id uint64) error
+	GetAlias(id uint64) (*Alias, error)
 
 	// Close releases all database resources.
 	Close()

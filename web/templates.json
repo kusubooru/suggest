@@ -12,6 +12,15 @@
     }, {
         "Name": "adminTmpl",
         "Files": ["base.tmpl", "nav.tmpl", "toolbar.tmpl", "admin.tmpl"]
+    }, {
+        "Name": "aliasNewTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias_new.tmpl"]
+    }, {
+        "Name": "aliasSearchTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias_search.tmpl"]
+    }, {
+        "Name": "aliasTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias.tmpl"]
     }]
 
 }
