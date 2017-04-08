@@ -446,7 +446,7 @@ const (
 	{{block "content" .}}{{end}}
 	<footer>
 		{{block "footer" .}}{{end}}
-		<em>Served by <a href="https://github.com/kusubooru/teian">teian</a> v{{.Conf.Version}}</em>
+		<em>Served by <a href="https://github.com/kusubooru/teian">teian</a> {{printv .Conf.Version}}</em>
 	</footer>
 </body>
 </html>
