@@ -165,26 +165,58 @@ const (
       text-align: center;
     }
 
+    .alias-search-form {
+      padding: 0.5em;
+    }
+    .alias-search-form input {
+      font-size: 120%;
+      margin-bottom: 0.5em;
+    }
+    .alias-search-form.advanced {
+      display: none;
+    }
   </style>
 {{ end }}
+{{define "js"}}
+  <script>
+    function toggleAdvanced() {
+      b = document.getElementById("toggleButton");
+      form = document.getElementById("aliasAdvancedSearchForm");
+      // Empty display reverts to CSS rule, in this case none.
+      if (form.style.display == '') {
+        form.style.display = 'block';
+	b.innerHTML = "-";
+      } else {
+        form.style.display = '';
+	b.innerHTML = "+";
+      }
+    }
+  </script>
+{{ end }}
 {{define "content"}}
-  <div class="toolbar">
-    <form method="get" action="/suggest/alias">
-      <input type="text" name="username" placeholder="Username">
-      <input type="text" name="comment" placeholder="Comment">
-      <label for="order">Order By</label>
-      <select id="order" name="order">
-        <option value="dd">Date Desc</option>
-        <option value="da">Date Asc</option>
-        <option value="ud">Username Desc</option>
-        <option value="ua">Username Asc</option>
-      </select>
-      <button type="submit">Search</button>
-      <input type="reset" value="Reset">
-    <a href="/suggest/alias/new">New</a>
-    </form>
-  </div>
+  <form class="alias-search-form" method="GET" action="/suggest/alias">
+    <input type="text" name="q" placeholder="Search alias">
+    <input type="submit" value="Search">
+    <button id="toggleButton" type="button" onclick="toggleAdvanced()">+</button>
+  </form>
 
+  <form id="aliasAdvancedSearchForm" class="alias-search-form advanced" method="GET" action="/suggest/alias/search">
+    <input type="text" name="old" placeholder="Old Tag">
+    <input type="text" name="new" placeholder="New Tag">
+    <input type="text" name="comment" placeholder="Comment">
+    <input type="text" name="username" placeholder="Submitter">
+    <label for="order">Order By</label>
+    <select id="order" name="order">
+      <option value="dd">Date Desc</option>
+      <option value="da">Date Asc</option>
+      <option value="ud">Username Desc</option>
+      <option value="ua">Username Asc</option>
+    </select>
+    <input type="submit" value="Advanced Search">
+    <hr>
+  </form>
+
+  <a href="/suggest/alias/new">Suggest New Alias</a>
   <table class="alias-table">
     <thead>
       <tr>
@@ -462,6 +494,7 @@ const (
 		{{block "footer" .}}{{end}}
 		<em>Served by <a href="https://github.com/kusubooru/teian">teian</a> {{printv .Conf.Version}}</em>
 	</footer>
+	{{block "js" .}}{{end}}
 </body>
 </html>
 

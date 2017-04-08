@@ -48,6 +48,8 @@ type SuggestionStore interface {
 	GetAlias(id uint64) (*Alias, error)
 	// UpdateAlias updates an alias.
 	UpdateAlias(id uint64, alias *Alias) (*Alias, error)
+	SearchAlias(query string) ([]*Alias, error)
+	SearchAliasAdvanced(old, new, username, comment string) ([]*Alias, error)
 
 	// Close releases all database resources.
 	Close()

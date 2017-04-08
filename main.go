@@ -125,6 +125,7 @@ func main() {
 	http.Handle("/suggest/login/submit", http.HandlerFunc(app.handleLogin))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
 	http.Handle("/suggest/alias", shim.Auth(app.serveAliasSearch, *loginURL))
+	http.Handle("/suggest/alias/search", shim.Auth(app.serveAliasSearchAdvanced, *loginURL))
 	http.Handle("/suggest/alias/", shim.Auth(app.handleAlias, *loginURL))
 	http.Handle("/suggest/alias/delete", shim.Auth(app.handleAliasDelete, *loginURL))
 	http.Handle("/suggest/alias/new", shim.Auth(app.serveAliasNew, *loginURL))

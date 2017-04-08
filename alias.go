@@ -200,31 +200,69 @@ func (app *App) serveAliasEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) serveAliasSearch(w http.ResponseWriter, r *http.Request) {
-	//err := app.Suggestions.DeleteAllAlias()
-	//if err != nil {
-	//	http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
-	//	return
-	//}
-
 	_, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok {
 		http.Redirect(w, r, app.Conf.LoginURL, http.StatusFound)
 		return
 	}
-	alias, err := app.Suggestions.AllAlias()
+
+	var alias []*teian.Alias
+	var err error
+	query := r.FormValue("q")
+	if query != "" {
+		alias, err = app.Suggestions.SearchAlias(query)
+	} else {
+		alias, err = app.Suggestions.AllAlias()
+	}
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
+		return
+	}
+	//alias = orderAlias(alias, "")
+	app.render(w, aliasSearchTmpl, alias)
+}
+
+func (app *App) serveAliasSearchAdvanced(w http.ResponseWriter, r *http.Request) {
+	_, ok := shimmie.FromContextGetUser(r.Context())
+	if !ok {
+		http.Redirect(w, r, app.Conf.LoginURL, http.StatusFound)
+		return
+	}
+
+	old := r.FormValue("old")
+	new := r.FormValue("new")
+	username := r.FormValue("username")
+	comment := r.FormValue("comment")
+	order := r.FormValue("order")
+
+	alias, err := app.Suggestions.SearchAliasAdvanced(old, new, username, comment)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	username := r.FormValue("username")
-	old := r.FormValue("old")
-	new := r.FormValue("new")
-	comment := r.FormValue("comment")
-	order := r.FormValue("order")
-
-	alias = filterAlias(alias, username, old, new, comment, order)
+	alias = orderAlias(alias, order)
 	app.render(w, aliasSearchTmpl, alias)
+}
+
+func orderAlias(alias []*teian.Alias, order string) []*teian.Alias {
+	if len(alias) == 0 || len(alias) == 1 {
+		return alias
+	}
+
+	switch order {
+	case "ua":
+		sort.Slice(alias, func(i, j int) bool { return alias[i].Username < alias[j].Username })
+	case "ud":
+		sort.Slice(alias, func(i, j int) bool { return alias[i].Username > alias[j].Username })
+	case "da":
+		sort.Slice(alias, func(i, j int) bool { return alias[i].Created.Before(alias[j].Created) })
+	case "dd":
+		fallthrough
+	default:
+		sort.Slice(alias, func(i, j int) bool { return alias[i].Created.After(alias[j].Created) })
+	}
+	return alias
 }
 
 func filterAlias(alias []*teian.Alias, username, old, new, comment, order string) []*teian.Alias {
