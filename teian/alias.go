@@ -14,6 +14,13 @@ const (
 	AliasRejected
 )
 
+var aliasStatuses = [...]string{
+	"New",
+	"Approved",
+	"Rejected",
+}
+
+func (as AliasStatus) String() string   { return aliasStatuses[as] }
 func (as AliasStatus) IsNew() bool      { return as == AliasNew }
 func (as AliasStatus) IsApproved() bool { return as == AliasApproved }
 func (as AliasStatus) IsRejected() bool { return as == AliasRejected }
