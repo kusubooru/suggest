@@ -19,8 +19,8 @@ func TestNewAlias(t *testing.T) {
 		comment  = "plz add this"
 	)
 
-	in := &teian.Alias{Old: old, New: new, Comment: comment}
-	err := store.NewAlias(username, in)
+	in := &teian.Alias{Old: old, New: new, Comment: comment, Username: username}
+	err := store.NewAlias(in)
 	if err != nil {
 		t.Error("store.NewAlias failed:", err)
 	}
@@ -49,7 +49,7 @@ func TestAllAlias_DeleteAlias(t *testing.T) {
 		new1      = "new_tag1"
 	)
 	for i := 0; i < 10; i++ {
-		err := store.NewAlias(username1, &teian.Alias{Old: old1, New: new1, Comment: fmt.Sprintf("%s #%d", comment1, i)})
+		err := store.NewAlias(&teian.Alias{Username: username1, Old: old1, New: new1, Comment: fmt.Sprintf("%s #%d", comment1, i)})
 		if err != nil {
 			t.Error("store.NewAlias failed:", err)
 		}
@@ -61,7 +61,7 @@ func TestAllAlias_DeleteAlias(t *testing.T) {
 		new2      = "new_tag2"
 	)
 	for i := 0; i < 10; i++ {
-		err := store.NewAlias(username2, &teian.Alias{Old: old2, New: new2, Comment: fmt.Sprintf("%s #%d", comment2, i)})
+		err := store.NewAlias(&teian.Alias{Username: username2, Old: old2, New: new2, Comment: fmt.Sprintf("%s #%d", comment2, i)})
 		if err != nil {
 			t.Error("store.NewAlias failed:", err)
 		}
@@ -77,7 +77,7 @@ func TestAllAlias_DeleteAlias(t *testing.T) {
 
 	// test delete
 	for i := 1; i <= 10; i++ {
-		if err = store.DeleteAlias(username1, uint64(i)); err != nil {
+		if err = store.DeleteAlias(uint64(i)); err != nil {
 			t.Errorf("store.DeleteAlias(%q, %d) failed: %v", username1, i, err)
 		}
 	}

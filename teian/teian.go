@@ -34,15 +34,20 @@ type SuggestionStore interface {
 	// Delete deletes a user's suggestion.
 	Delete(username string, id uint64) error
 
-	// NewAlias creates a new alias suggestion for a user.
-	NewAlias(username string, alias *Alias) error
+	// NewAlias creates a new alias suggestion.
+	NewAlias(alias *Alias) error
 	// GetAliasOfUser gets all the alias created by a user.
 	GetAliasOfUser(username string) ([]*Alias, error)
 	// AllAlias returns all the alias.
 	AllAlias() ([]*Alias, error)
 	// DeleteAlias deletes a user's alias.
-	DeleteAlias(username string, id uint64) error
+	DeleteAlias(id uint64) error
+	// DeleteAllAlias deletes all allias.
+	DeleteAllAlias() error
+	// GetAlias returns an alias based on its ID.
 	GetAlias(id uint64) (*Alias, error)
+	// UpdateAlias updates an alias.
+	UpdateAlias(id uint64, alias *Alias) (*Alias, error)
 
 	// Close releases all database resources.
 	Close()
