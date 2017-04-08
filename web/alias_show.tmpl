@@ -1,12 +1,26 @@
 {{define "title"}}Alias - Show{{end}}
+{{define "css"}}
+  <style>
+    .alias-show h2 {
+      font-size: 120%;
+    }
+    .alias-show span {
+      font-size: 100%;
+    }
+    .alias-show label {
+      font-size: 100%;
+    }
+  </style>
+{{end}}
 {{define "content"}}
   {{with .Data}}
-    <div class="alias-form">
-      <input type="text" name="old" value="{{.Old}}" readonly>
-      <input type="text" name="new" value="{{.New}}" readonly>
-      <input type="text" name="comment" value="{{filterEmpty .Comment "-"}}" readonly>
-      <input type="hidden" name="status" value="{{.Status}}">
+    <article class="alias-show">
 
-    </div>
+      <h2>{{.Old}} &rarr; {{.New}}</h2>
+      <time>{{.FmtCreated}}</time> by <a href="/user/{{.Username}}">{{.Username}}</a>
+      <p><label for="comment">Comment:</label> <span id="comment">{{filterEmpty .Comment "-"}}</span></p>
+      <p><label for="status">Status:</label> <span id="status">{{.Status}}</span></p>
+
+    </article>
   {{end}}
 {{ end }}
