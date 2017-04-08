@@ -1,0 +1,85 @@
+{{define "title"}}Alias - Search{{end}}
+{{define "css"}}
+  <style>
+    .alias-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    table, td, th {
+      border: 1px solid #ddd;
+    }
+    td, th {
+      padding: 0.5em;
+    }
+    .alias-table-body tr:nth-child(odd) {
+      background: #f9f9f9;
+    }
+    .status {
+      width: 5px;
+      padding: 0;
+      margin: 0;
+      /*border: 0px;*/
+    }
+    .status-new {
+      background-color: #006ffa;
+      /*background-color: #1b809e; bootstrap */
+    }
+    .status-rejected {
+      /* background-color: #ce4844; bootstrap */
+      background-color: #fa0c00;
+    }
+    .status-approved {
+      /*background-color: #449d44; bootstrap */
+      background-color: #70fa00;
+    }
+    .center {
+      text-align: center;
+    }
+
+  </style>
+{{ end }}
+{{define "content"}}
+  <div class="toolbar">
+    <form method="get" action="/suggest/alias">
+      <input type="text" name="username" placeholder="Username">
+      <input type="text" name="comment" placeholder="Comment">
+      <label for="order">Order By</label>
+      <select id="order" name="order">
+        <option value="dd">Date Desc</option>
+        <option value="da">Date Asc</option>
+        <option value="ud">Username Desc</option>
+        <option value="ua">Username Asc</option>
+      </select>
+      <button type="submit">Search</button>
+      <input type="reset" value="Reset">
+    <a href="/suggest/alias/new">New</a>
+    </form>
+  </div>
+
+  <table class="alias-table">
+    <thead>
+      <tr>
+        <th class="status"></th>
+        <th>Alias</th>
+        <th>Comment</th>
+        <th>Submitter</th>
+        <th>Submitted At</th>
+      </tr>
+    </thead>
+    <tbody class="alias-table-body">
+      {{range .Data}}
+        <tr>
+		<td class="
+		status
+		{{if .Status.IsNew }}status-new{{end}}
+		{{if eq .Status 1}}status-approved{{end}}
+		{{if eq .Status 2}}status-rejected{{end}}"></td>
+          <td><a class="alias-link" href="/suggest/alias/{{.ID}}">{{.Old}} &rarr; {{.New}}</a></td>
+	  <td>{{filterEmpty .Comment "-"}}</td>
+	  <td class="center"><a href="/user/{{.Username}}">{{.Username}}</a></td>
+	  <td class="center"><time>{{.FmtCreated}}</time></td>
+	</tr>
+      {{end}}
+    </tbody>
+  </table>
+{{ end }}

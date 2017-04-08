@@ -19,8 +19,14 @@
         "Name": "aliasSearchTmpl",
         "Files": ["base.tmpl", "nav.tmpl", "alias_search.tmpl"]
     }, {
-        "Name": "aliasTmpl",
-        "Files": ["base.tmpl", "nav.tmpl", "alias.tmpl"]
+        "Name": "aliasShowTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias_show.tmpl"]
+    }, {
+        "Name": "aliasEditNormalTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias_edit_base.tmpl", "alias_edit_normal.tmpl"]
+    }, {
+        "Name": "aliasEditAdminTmpl",
+        "Files": ["base.tmpl", "nav.tmpl", "alias_edit_base.tmpl", "alias_edit_admin.tmpl"]
     }]
 
 }

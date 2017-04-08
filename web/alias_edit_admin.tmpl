@@ -1,0 +1,23 @@
+{{define "title"}}Alias - Edit Admin{{end}}
+{{define "content"}}
+  {{with .Data}}
+    <div class="alias-form">
+      <form method="POST" action="/suggest/alias/{{.ID}}">
+        <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.Old}}">
+        <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.New}}">
+        <input type="text" name="comment" placeholder="Comment (Optional)" value="{{.Comment}}">
+	<select name="status">
+	  <option value="0" {{if .Status.IsNew}}selected{{end}}>New</option>
+	  <option value="1" {{if .Status.IsApproved}}selected{{end}}>Approved</option>
+	  <option value="2" {{if .Status.IsRejected}}selected{{end}}>Rejected</option>
+	</select>
+        <input type="submit" value="Update">
+      </form>
+
+      <form class="delete-form" method="POST" action="/suggest/alias/delete">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <input type="submit" value="Delete">
+      </form>
+    </div>
+  {{end}}
+{{ end }}

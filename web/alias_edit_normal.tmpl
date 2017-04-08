@@ -1,0 +1,16 @@
+{{define "title"}}Alias - Edit{{end}}
+{{define "content"}}
+  {{with .Data}}
+    <div class="alias-form">
+      <form method="POST" action="/suggest/alias/{{.ID}}">
+        <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.Old}}">
+        <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.New}}">
+        <input type="text" name="comment" placeholder="Comment (Optional)" value="{{.Comment}}">
+        <input type="hidden" name="status" value="{{.Status}}">
+
+        <input type="submit" value="Update">
+      </form>
+
+    </div>
+  {{end}}
+{{ end }}

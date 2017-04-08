@@ -1,0 +1,26 @@
+{{define "title"}}Alias - New{{end}}
+{{define "css"}}
+  <style>
+    .alias-form {
+      padding: 0.5em;
+      line-height: 200%;
+    }
+    .alias-form submit {
+      display: inline;
+      font-size: 120%;
+    }
+    .alias-form input {
+      font-size: 120%;
+    }
+  </style>
+{{ end }}
+{{define "content"}}
+  <div class="alias-form">
+    <form method="post" action="/suggest/alias/new/submit">
+      <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
+      <input type="text" name="comment" placeholder="Comment (Optional)">
+      <input type="submit" value="Suggest New Alias">
+    </form>
+  </div>
+{{ end }}

@@ -1,0 +1,12 @@
+{{define "title"}}Alias - Show{{end}}
+{{define "content"}}
+  {{with .Data}}
+    <div class="alias-form">
+      <input type="text" name="old" value="{{.Old}}" readonly>
+      <input type="text" name="new" value="{{.New}}" readonly>
+      <input type="text" name="comment" value="{{filterEmpty .Comment "-"}}" readonly>
+      <input type="hidden" name="status" value="{{.Status}}">
+
+    </div>
+  {{end}}
+{{ end }}

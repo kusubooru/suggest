@@ -7,13 +7,15 @@ import (
 )
 
 var (
-	adminTmpl       = template.Must(template.New("adminTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + toolbarTemplate + adminTemplate))
-	aliasNewTmpl    = template.Must(template.New("aliasNewTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_newTemplate))
-	aliasSearchTmpl = template.Must(template.New("aliasSearchTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_searchTemplate))
-	aliasTmpl       = template.Must(template.New("aliasTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + aliasTemplate))
-	loginTmpl       = template.Must(template.New("loginTmpl").Funcs(fns).Parse(baseTemplate + loginTemplate))
-	submitTmpl      = template.Must(template.New("submitTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + submitTemplate))
-	suggestionTmpl  = template.Must(template.New("suggestionTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + suggestionTemplate))
+	adminTmpl           = template.Must(template.New("adminTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + toolbarTemplate + adminTemplate))
+	aliasEditAdminTmpl  = template.Must(template.New("aliasEditAdminTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_edit_baseTemplate + alias_edit_adminTemplate))
+	aliasEditNormalTmpl = template.Must(template.New("aliasEditNormalTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_edit_baseTemplate + alias_edit_normalTemplate))
+	aliasNewTmpl        = template.Must(template.New("aliasNewTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_newTemplate))
+	aliasSearchTmpl     = template.Must(template.New("aliasSearchTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_searchTemplate))
+	aliasShowTmpl       = template.Must(template.New("aliasShowTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + alias_showTemplate))
+	loginTmpl           = template.Must(template.New("loginTmpl").Funcs(fns).Parse(baseTemplate + loginTemplate))
+	submitTmpl          = template.Must(template.New("submitTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + submitTemplate))
+	suggestionTmpl      = template.Must(template.New("suggestionTmpl").Funcs(fns).Parse(baseTemplate + navTemplate + suggestionTemplate))
 )
 
 const (
@@ -32,7 +34,32 @@ const (
 {{ end }}
 {{end}}
 `
-	aliasTemplate = `
+	alias_edit_adminTemplate = `
+{{define "title"}}Alias - Edit Admin{{end}}
+{{define "content"}}
+  {{with .Data}}
+    <div class="alias-form">
+      <form method="POST" action="/suggest/alias/{{.ID}}">
+        <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.Old}}">
+        <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.New}}">
+        <input type="text" name="comment" placeholder="Comment (Optional)" value="{{.Comment}}">
+	<select name="status">
+	  <option value="0" {{if .Status.IsNew}}selected{{end}}>New</option>
+	  <option value="1" {{if .Status.IsApproved}}selected{{end}}>Approved</option>
+	  <option value="2" {{if .Status.IsRejected}}selected{{end}}>Rejected</option>
+	</select>
+        <input type="submit" value="Update">
+      </form>
+
+      <form class="delete-form" method="POST" action="/suggest/alias/delete">
+        <input type="hidden" name="id" value="{{.ID}}">
+        <input type="submit" value="Delete">
+      </form>
+    </div>
+  {{end}}
+{{ end }}
+`
+	alias_edit_baseTemplate = `
 {{define "css"}}
   <style>
     .alias-form {
@@ -46,20 +73,33 @@ const (
     .alias-form input {
       font-size: 120%;
     }
+    .delete-form {
+      display: block;
+      margin-top: 0.5em;
+    }
   </style>
 {{ end }}
+`
+	alias_edit_normalTemplate = `
+{{define "title"}}Alias - Edit{{end}}
 {{define "content"}}
-  <div class="alias-form">
-    <form method="post" action="/suggest/alias/new/submit">
-      <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
-      <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" >
-      <input type="text" name="comment" placeholder="Comment (Optional)">
-      <input type="submit" value="Suggest New Alias">
-    </form>
-  </div>
+  {{with .Data}}
+    <div class="alias-form">
+      <form method="POST" action="/suggest/alias/{{.ID}}">
+        <input type="text" name="old" placeholder="Old Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.Old}}">
+        <input type="text" name="new" placeholder="New Tag" required pattern="^\S+$" title="tags cannot contain spaces" value="{{.New}}">
+        <input type="text" name="comment" placeholder="Comment (Optional)" value="{{.Comment}}">
+        <input type="hidden" name="status" value="{{.Status}}">
+
+        <input type="submit" value="Update">
+      </form>
+
+    </div>
+  {{end}}
 {{ end }}
 `
 	alias_newTemplate = `
+{{define "title"}}Alias - New{{end}}
 {{define "css"}}
   <style>
     .alias-form {
@@ -87,59 +127,9 @@ const (
 {{ end }}
 `
 	alias_searchTemplate = `
+{{define "title"}}Alias - Search{{end}}
 {{define "css"}}
   <style>
-    .alias input {
-      font-size: 120%;
-    }
-    .alias label {
-      font-size: 120%;
-    }
-    .alias form {
-      display: inline;
-    }
-    .alias {
-      padding: 0.5em;
-      border-top: 1px #ebebeb solid;
-      border-bottom: 1px #ebebeb solid;
-      border-left: 0.3em #006FFA solid;
-      border-top-left-radius: 0.3em;
-      border-bottom-left-radius: 0.3em;
-      line-height: 200%;
-    }
-    .alias:nth-of-type(even) {
-      background: #f6f6f6;
-    }
-    .alias-span {
-      padding: 0.5em;
-      font-size: 120%;
-      display: block;
-    }
-    .alias-body {
-      padding: 0.5em;
-    }
-    .alias-body label{
-      padding-right: 0.5em;
-    }
-    .alias-body-field {
-      display: inline-block;
-      padding: 0.5em;
-    }
-    .alias-body-field label {
-      display: inline-block;
-      width: 5em;
-      min-width:5em;
-    }
-    .alias-body-field.alias-body-field-tag input {
-      display: inline-block;
-      /*width: 6em;*/
-      width: 15em;
-    }
-    .alias-body-field.alias-body-field-comment input {
-      display: inline-block;
-      width: 15em;
-    }
-
     .alias-table {
       width: 100%;
       border-collapse: collapse;
@@ -214,48 +204,27 @@ const (
 		{{if eq .Status 1}}status-approved{{end}}
 		{{if eq .Status 2}}status-rejected{{end}}"></td>
           <td><a class="alias-link" href="/suggest/alias/{{.ID}}">{{.Old}} &rarr; {{.New}}</a></td>
-	  <td>{{.Comment}}</td>
+	  <td>{{filterEmpty .Comment "-"}}</td>
 	  <td class="center"><a href="/user/{{.Username}}">{{.Username}}</a></td>
 	  <td class="center"><time>{{.FmtCreated}}</time></td>
 	</tr>
       {{end}}
     </tbody>
   </table>
+{{ end }}
+`
+	alias_showTemplate = `
+{{define "title"}}Alias - Show{{end}}
+{{define "content"}}
+  {{with .Data}}
+    <div class="alias-form">
+      <input type="text" name="old" value="{{.Old}}" readonly>
+      <input type="text" name="new" value="{{.New}}" readonly>
+      <input type="text" name="comment" value="{{filterEmpty .Comment "-"}}" readonly>
+      <input type="hidden" name="status" value="{{.Status}}">
 
-  {{ range .Data }}
-    <div class="alias">
-      <h2 class="alias-span">{{.Old}} &rarr; {{.New}}</h2>
-      <span style="float:right"><time>{{.FmtCreated}}</time> by <a href="/user/{{.Username}}">{{.Username}}</a></span>
-      <!-- ><span>{{.FmtCreated}} by <a href="/user/{{.Username}}">{{.Username}}</a></span> -->
-      <span class="alias-span">Submitted At: {{.FmtCreated}}</span>
-      {{if .Comment}}<span class="alias-span">Comment: {{.Comment}}</span>{{end}}
-      <form method="post" action="/suggest/alias/delete">
-        <input type="hidden" name="username" value="{{.Username}}">
-        <input type="hidden" name="id" value="{{.ID}}">
-        <input type="submit" value="Delete">
-      </form>
-      <div class="alias-body">
-	<span class="alias-span">{{.Old}} &rarr; {{.New}}</span>
-	{{if .Comment}}<span class="alias-span">Comment: {{.Comment}}</span>{{end}}
-        <div class="alias-body-field alias-body-field-tag">
-          <label for="old">Old Tag:</label>
-          <input id="old" type="text" name="old" value="{{.Old}}" readonly>
-	</div>
-        <div class="alias-body-field alias-body-field-tag">
-          <label for="new">New Tag:</label>
-          <input id="new" type="text" name="new" value="{{.New}}" readonly>
-	</div>
-        <div class="alias-body-field alias-body-field-comment">
-          <label for="comment">Comment:</label>
-          <input id="comment" type="text" name="comment" value="{{.Comment}}" readonly>
-	</div>
-        <div class="alias-body-field alias-body-field-comment">
-          <label for="explanation">Explanation:</label>
-          <input id="explanation" type="text" name="comment" value="{{.Comment}}" readonly>
-	</div>
-      </div>
     </div>
-  {{ end }}
+  {{end}}
 {{ end }}
 `
 	baseTemplate = `
@@ -265,7 +234,7 @@ const (
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>suggest</title>
+	<title>Suggest {{block "title" .}}{{end}}</title>
 	<script type='text/javascript'>
 		var _gaq = _gaq || [];
 		_gaq.push(['_setAccount', '{{.Conf.AnalyticsID}}']);
