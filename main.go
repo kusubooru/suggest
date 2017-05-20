@@ -245,6 +245,34 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
+
+func (app *App) testLogin(w http.ResponseWriter, r *http.Request) {
+	// only accept POST method
+	if r.Method != "POST" {
+		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+	username := r.PostFormValue("username")
+	password := r.PostFormValue("password")
+	user, err := app.Shimmie.GetUser(username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
+			return
+		}
+		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
+		log.Print(msg)
+		http.Error(w, msg, http.StatusInternalServerError)
+		return
+	}
+	passwordHash := shimmie.PasswordHash(username, password)
+	if user.Pass != passwordHash {
+		http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func handleLogout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Use POST to logout.", http.StatusMethodNotAllowed)
