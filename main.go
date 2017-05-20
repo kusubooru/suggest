@@ -225,7 +225,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	user, err := app.Shimmie.GetUser(username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			app.render(w, loginTmpl, "User does not exist.")
+			app.render(w, loginTmpl, "Wrong username or password.")
 			return
 		}
 		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
@@ -235,7 +235,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	passwordHash := shimmie.PasswordHash(username, password)
 	if user.Pass != passwordHash {
-		app.render(w, loginTmpl, "Username and password do not match.")
+		app.render(w, loginTmpl, "Wrong username or password.")
 		return
 	}
 	addr := strings.Split(r.RemoteAddr, ":")[0]
