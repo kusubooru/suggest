@@ -1,10 +1,15 @@
 package teian
 
 import (
+	"errors"
 	"sort"
 	"strings"
 	"time"
 )
+
+var ErrOverQuota = errors.New("quota exceeded")
+
+type Quota int64
 
 // Conf holds configuration values that the program needs.
 type Conf struct {
@@ -32,6 +37,9 @@ type SuggestionStore interface {
 	All() ([]Suggestion, error)
 	// Delete deletes a user's suggestion.
 	Delete(username string, id uint64) error
+
+	CheckQuota(username string, n Quota) (Quota, error)
+	CleanQuota() error
 
 	// Close releases all database resources.
 	Close()

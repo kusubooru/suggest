@@ -20,7 +20,7 @@ import (
 	"github.com/kusubooru/teian/teian/boltstore"
 )
 
-const theVersion = "1.1.0"
+const theVersion = "1.2.0"
 
 var (
 	httpAddr  = flag.String("http", "localhost:8080", "HTTP listen address")
@@ -34,6 +34,7 @@ var (
 	keyFile   = flag.String("tlskey", "", "TLS private key in PEM format. Must be used together with -tlscert")
 	imagePath = flag.String("imagepath", "", "path where images are stored")
 	thumbPath = flag.String("thumbpath", "", "path where image thumbnails are stored")
+	uploadDir = flag.String("updir", "tagaa_uploads", "upload directory")
 	// Set after flag parsing based on certFile & keyFile.
 	useTLS bool
 )
@@ -45,6 +46,11 @@ const (
 	writeMessage         = `Do you have a suggestion on how to improve the site? Write it here!`
 	submitSuccessMessage = "Your suggestion has been submitted. Thank you for your feedback!"
 	submitFailureMessage = "Something broke! :'( Our developers were notified."
+
+	userUploadQuota     = 200 << 20 // 200 MB
+	resetHour       int = 12
+	resetMinute     int = 00
+	resetSecond     int = 00
 )
 
 func usage() {
@@ -75,8 +81,23 @@ func main() {
 	}
 
 	// create suggestion store
-	suggStore := boltstore.NewSuggestionStore(*boltFile)
+	suggStore := boltstore.NewSuggestionStore(*boltFile, userUploadQuota)
 	closeStoreOnSignal(suggStore)
+
+	t := teian.NewTimer(resetHour, resetMinute, resetSecond)
+	go func() {
+		for {
+			<-t.C
+			log.Println("Cleaning quota")
+			if err := suggStore.CleanQuota(); err != nil {
+				log.Println("Clean quota failed:", err)
+			}
+			t.Reset()
+		}
+	}()
+
+	// Prepare directory for uploads.
+	mkDirIfNotExist(*uploadDir, 0700)
 
 	app := &App{
 		Shimmie:     shim,
@@ -99,6 +120,7 @@ func main() {
 	http.Handle("/suggest/login/submit", http.HandlerFunc(app.handleLogin))
 	http.Handle("/suggest/login/test", allowCORS(http.HandlerFunc(app.testLogin)))
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
+	http.Handle("/suggest/upload", allowCORS(http.HandlerFunc(app.handleUpload)))
 
 	if useTLS {
 		if err := http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, nil); err != nil {
@@ -121,6 +143,18 @@ func closeStoreOnSignal(s teian.SuggestionStore) {
 			os.Exit(1)
 		}
 	}()
+}
+
+func mkDirIfNotExist(name string, perm os.FileMode) error {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			if err = os.Mkdir(name, perm); err != nil {
+				return fmt.Errorf("could not make dir: %v", err)
+			}
+			log.Printf("Created directory %s %v", name, perm)
+		}
+	}
+	return nil
 }
 
 // App represents the Teian application and holds its dependencies.

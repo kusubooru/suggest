@@ -8,18 +8,22 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-const suggestionsBucket = "suggestions"
+const (
+	suggestionsBucket = "suggestions"
+	quotaBucket       = "uploadQuota"
+)
 
 type boltstore struct {
 	*bolt.DB
+	userQuota teian.Quota
 }
 
 // NewSuggestionStore opens the bolt database file and returns a new
 // SuggestionStore. The bolt database file will be created if it does not
 // exist.
-func NewSuggestionStore(boltFile string) teian.SuggestionStore {
+func NewSuggestionStore(boltFile string, userQuota teian.Quota) teian.SuggestionStore {
 	boltdb := openBolt(boltFile)
-	return &boltstore{boltdb}
+	return &boltstore{boltdb, userQuota}
 }
 
 func (db *boltstore) Close() {
@@ -38,6 +42,10 @@ func openBolt(file string) *bolt.DB {
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(suggestionsBucket))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte(quotaBucket))
 		return err
 	})
 	if err != nil {
