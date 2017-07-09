@@ -122,6 +122,12 @@ func main() {
 	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
 	http.Handle("/suggest/upload", allowCORS(http.HandlerFunc(app.handleUpload)))
 
+	api := &API{
+		Shimmie: shim,
+	}
+
+	http.Handle("/suggest/autocomplete", allowCORS(apiHandler(api.handleAutocomplete)))
+
 	if useTLS {
 		if err := http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, nil); err != nil {
 			log.Fatalf("Could not start listening (TLS) on %v: %v", *httpAddr, err)
