@@ -263,7 +263,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	user, err := app.Shimmie.GetUser(username)
+	user, err := app.Shimmie.GetUserByName(username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			app.render(w, loginTmpl, "Wrong username or password.")
@@ -317,7 +317,7 @@ func (app *App) testLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	user, err := app.Shimmie.GetUser(username)
+	user, err := app.Shimmie.GetUserByName(username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)

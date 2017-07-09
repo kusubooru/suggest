@@ -37,7 +37,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 	// Authenticate user.
 	username := r.PostFormValue("username")
 	password := r.PostFormValue("password")
-	user, err := app.Shimmie.GetUser(username)
+	user, err := app.Shimmie.GetUserByName(username)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
