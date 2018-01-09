@@ -88,7 +88,6 @@ func main() {
 	go func() {
 		for {
 			<-t.C
-			log.Println("Cleaning quota")
 			if err := suggStore.CleanQuota(); err != nil {
 				log.Println("Clean quota failed:", err)
 			}
