@@ -112,15 +112,15 @@ func main() {
 		},
 	}
 
-	http.Handle("/suggest", shim.Auth(app.serveIndex, *loginURL))
-	http.Handle("/suggest/admin", shim.Auth(app.serveAdmin, *loginURL))
-	http.Handle("/suggest/admin/delete", shim.Auth(app.handleDelete, *loginURL))
-	http.Handle("/suggest/submit", shim.Auth(app.handleSubmit, *loginURL))
-	http.Handle("/suggest/login", http.HandlerFunc(app.serveLogin))
-	http.Handle("/suggest/login/submit", http.HandlerFunc(app.handleLogin))
-	http.Handle("/suggest/login/test", allowCORS(http.HandlerFunc(app.testLogin)))
-	http.Handle("/suggest/logout", http.HandlerFunc(handleLogout))
-	http.Handle("/suggest/upload", allowCORS(http.HandlerFunc(app.handleUpload)))
+	http.Handle("/suggest", shim.AuthFunc(app.serveIndex, *loginURL))
+	http.Handle("/suggest/admin", shim.AuthFunc(app.serveAdmin, *loginURL))
+	http.Handle("/suggest/admin/delete", shim.AuthFunc(app.handleDelete, *loginURL))
+	http.Handle("/suggest/submit", shim.AuthFunc(app.handleSubmit, *loginURL))
+	http.HandleFunc("/suggest/login", app.serveLogin)
+	http.HandleFunc("/suggest/login/submit", app.handleLogin)
+	http.Handle("/suggest/login/test", allowCORSFunc(app.testLogin))
+	http.HandleFunc("/suggest/logout", handleLogout)
+	http.Handle("/suggest/upload", allowCORSFunc(app.handleUpload))
 
 	api := &API{
 		Shimmie: shim,
@@ -299,6 +299,10 @@ func allowCORS(h http.Handler) http.Handler {
 		}
 		h.ServeHTTP(w, r)
 	})
+}
+
+func allowCORSFunc(fn http.HandlerFunc) http.Handler {
+	return allowCORS(fn)
 }
 
 func preflightHandler(w http.ResponseWriter, r *http.Request) {
