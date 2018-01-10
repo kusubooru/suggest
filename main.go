@@ -99,9 +99,10 @@ func main() {
 	mkDirIfNotExist(*uploadDir, 0700)
 
 	app := &App{
+		Log:         newDefaultLogger(),
 		Shimmie:     shim,
 		Suggestions: suggStore,
-		Conf: &teian.Conf{
+		Conf: teian.Conf{
 			Title:       common.Title,
 			AnalyticsID: common.AnalyticsID,
 			Description: common.Description,
@@ -114,7 +115,8 @@ func main() {
 	http.Handle("/suggest", shim.AuthFunc(app.serveIndex, *loginURL))
 	http.Handle("/suggest/admin", shim.AuthFunc(app.serveAdmin, *loginURL))
 	http.Handle("/suggest/admin/delete", shim.AuthFunc(app.handleDelete, *loginURL))
-	http.Handle("/suggest/submit", shim.AuthFunc(app.handleSubmit, *loginURL))
+	http.Handle("/suggest/submit", shim.Auth(app.handleSubmit("/suggest", *loginURL, "/suggest/success"), *loginURL))
+	http.Handle("/suggest/success", shim.AuthFunc(app.serveSuccess, *loginURL))
 	http.HandleFunc("/suggest/login", app.serveLogin)
 	http.HandleFunc("/suggest/login/submit", app.handleLogin)
 	http.Handle("/suggest/login/test", allowCORSFunc(app.testLogin))
@@ -138,7 +140,7 @@ func main() {
 	}
 }
 
-func closeStoreOnSignal(s teian.SuggestionStore) {
+func closeStoreOnSignal(s *boltstore.Boltstore) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
 	go func() {
@@ -164,8 +166,9 @@ func mkDirIfNotExist(name string, perm os.FileMode) error {
 
 // App represents the Teian application and holds its dependencies.
 type App struct {
+	Log         Logger
 	Suggestions teian.SuggestionStore
-	Conf        *teian.Conf
+	Conf        teian.Conf
 	Shimmie     *shimmie.Shimmie
 }
 
@@ -268,9 +271,7 @@ func (app *App) handleLogin(w http.ResponseWriter, r *http.Request) {
 			app.render(w, loginTmpl, "Wrong username or password.")
 			return
 		}
-		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
-		log.Print(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
+		app.Errorf(w, http.StatusInternalServerError, err, "get user %q failed", username)
 		return
 	}
 	passwordHash := shimmie.PasswordHash(username, password)
@@ -326,9 +327,7 @@ func (app *App) testLogin(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
 			return
 		}
-		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
-		log.Print(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
+		app.Errorf(w, http.StatusInternalServerError, err, "get user %q failed", username)
 		return
 	}
 	passwordHash := shimmie.PasswordHash(username, password)
@@ -349,54 +348,66 @@ func handleLogout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/suggest", http.StatusFound)
 }
 
-func (app *App) handleSubmit(w http.ResponseWriter, r *http.Request) {
-	// only accept POST method
-	if r.Method != "POST" {
-		http.Error(w, fmt.Sprintf("%v method not allowed", r.Method), http.StatusMethodNotAllowed)
-		return
+func (app *App) Errorf(w http.ResponseWriter, code int, err error, format string, a ...interface{}) {
+	msg := fmt.Sprintf(format, a...)
+	if code == http.StatusInternalServerError {
+		s := fmt.Sprintf("%d %s: %v", code, msg, err)
+		app.Log.Println(s)
 	}
-	// get user from context
-	user, ok := shimmie.FromContextGetUser(r.Context())
-	if !ok {
-		http.Redirect(w, r, *loginURL, http.StatusFound)
-		return
-	}
-	text := r.PostFormValue("text")
-	// redirect if suggestion text is empty
-	if len(strings.TrimSpace(text)) == 0 {
-		http.Redirect(w, r, "/suggest", http.StatusFound)
-		return
-	}
+	http.Error(w, msg, code)
+}
 
+func (app *App) handleSubmit(badInputURL, loginURL, successURL string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// only accept POST method
+		if r.Method != "POST" {
+			app.Errorf(w, http.StatusMethodNotAllowed, nil, "%v method not allowed", r.Method)
+			return
+		}
+		// get user from context
+		user, ok := shimmie.FromContextGetUser(r.Context())
+		if !ok {
+			http.Redirect(w, r, loginURL, http.StatusFound)
+			return
+		}
+		text := r.PostFormValue("text")
+		// redirect if suggestion text is empty
+		if len(strings.TrimSpace(text)) == 0 {
+			http.Redirect(w, r, badInputURL, http.StatusFound)
+			return
+		}
+
+		// create and store suggestion
+		err := app.Suggestions.Create(user.Name, &teian.Suggestion{Text: text})
+		if err != nil {
+			app.Errorf(w, http.StatusInternalServerError, err, submitFailureMessage)
+			return
+		}
+
+		http.Redirect(w, r, successURL, http.StatusSeeOther)
+	})
+}
+
+func (app *App) serveSuccess(w http.ResponseWriter, r *http.Request) {
 	type result struct {
 		Err  error
 		Msg  string
 		Type string
 	}
-
-	// create and store suggestion
-	err := app.Suggestions.Create(user.Name, &teian.Suggestion{Text: text})
-	if err != nil {
-		app.render(w, submitTmpl, result{Err: err, Type: "error", Msg: submitFailureMessage})
-	}
-
 	app.render(w, submitTmpl, result{Type: "success", Msg: submitSuccessMessage})
-
 }
 
-func render(w http.ResponseWriter, t *template.Template, data interface{}) {
+func (app *App) renderTemplate(w http.ResponseWriter, t *template.Template, data interface{}) {
 	if err := t.Execute(w, data); err != nil {
-		msg := fmt.Sprintln("could not render template:", err)
-		log.Print(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
+		app.Errorf(w, http.StatusInternalServerError, err, "could not render template")
 		return
 	}
 }
 
 func (app *App) render(w http.ResponseWriter, t *template.Template, data interface{}) {
-	render(w, t, struct {
+	app.renderTemplate(w, t, struct {
 		Data interface{}
-		Conf *teian.Conf
+		Conf teian.Conf
 	}{
 		Data: data,
 		Conf: app.Conf,

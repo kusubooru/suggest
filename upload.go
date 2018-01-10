@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -43,9 +42,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
 			return
 		}
-		msg := fmt.Sprintf("get user %q failed: %v", username, err.Error())
-		log.Print(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
+		app.Errorf(w, http.StatusInternalServerError, err, "get user %q failed: %v", username)
 		return
 	}
 	passwordHash := shimmie.PasswordHash(username, password)
@@ -77,8 +74,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 
 	n, err := io.Copy(f, file)
 	if err != nil {
-		log.Println("file copy failed:", err)
-		http.Error(w, "file copy failed", http.StatusInternalServerError)
+		app.Errorf(w, http.StatusInternalServerError, err, "file copy failed")
 		return
 	}
 
@@ -86,7 +82,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 	remain, err := app.Suggestions.CheckQuota(username, teian.Quota(n))
 	if err != nil {
 		if rerr := os.Remove(f.Name()); rerr != nil {
-			log.Println("file cleanup failed:", rerr)
+			app.Log.Println("file cleanup failed:", rerr)
 		}
 		if err == teian.ErrOverQuota {
 			http.Error(w, "quota exceeded", http.StatusForbidden)
@@ -96,11 +92,11 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go sendMail(username, f.Name(), n, int64(remain))
+	go sendMail(username, f.Name(), n, int64(remain), app.Log)
 	fmt.Fprintf(w, "%v", remain)
 }
 
-func sendMail(username, file string, uploaded, remain int64) {
+func sendMail(username, file string, uploaded, remain int64, logger Logger) {
 	path, err := filepath.Abs(file)
 	if err != nil {
 		path = file
@@ -114,6 +110,6 @@ func sendMail(username, file string, uploaded, remain int64) {
 	}
 	err = teian.SendMail(mail)
 	if err != nil {
-		log.Println(err)
+		logger.Println(err)
 	}
 }

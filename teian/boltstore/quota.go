@@ -10,7 +10,7 @@ import (
 	"github.com/kusubooru/teian/teian"
 )
 
-func (db *boltstore) CheckQuota(username string, n teian.Quota) (teian.Quota, error) {
+func (db *Boltstore) CheckQuota(username string, n teian.Quota) (teian.Quota, error) {
 
 	var remain teian.Quota
 
@@ -55,7 +55,7 @@ func (db *boltstore) CheckQuota(username string, n teian.Quota) (teian.Quota, er
 	return remain, err
 }
 
-func (db *boltstore) CleanQuota() error {
+func (db *Boltstore) CleanQuota() error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(quotaBucket))
 		return b.ForEach(func(k, v []byte) error {

@@ -13,20 +13,21 @@ const (
 	quotaBucket       = "uploadQuota"
 )
 
-type boltstore struct {
+type Boltstore struct {
 	*bolt.DB
 	userQuota teian.Quota
 }
 
-// NewSuggestionStore opens the bolt database file and returns a new
-// SuggestionStore. The bolt database file will be created if it does not
-// exist.
-func NewSuggestionStore(boltFile string, userQuota teian.Quota) teian.SuggestionStore {
+// NewSuggestionStore opens the bolt database file and returns an
+// implementation of teian.SuggestionStore. The bolt database file will be
+// created if it does not exist.
+func NewSuggestionStore(boltFile string, userQuota teian.Quota) *Boltstore {
 	boltdb := openBolt(boltFile)
-	return &boltstore{boltdb, userQuota}
+	return &Boltstore{boltdb, userQuota}
 }
 
-func (db *boltstore) Close() {
+// Close releases all database resources.
+func (db *Boltstore) Close() {
 	if err := db.DB.Close(); err != nil {
 		log.Println("bolt close failed:", err)
 	}

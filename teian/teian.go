@@ -39,10 +39,6 @@ type SuggestionStore interface {
 	Delete(username string, id uint64) error
 
 	CheckQuota(username string, n Quota) (Quota, error)
-	CleanQuota() error
-
-	// Close releases all database resources.
-	Close()
 }
 
 // Suggestion represents a suggestion that a user can create.
