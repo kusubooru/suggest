@@ -44,7 +44,6 @@ const (
   A service that allows users to submit suggestions.
 `
 	writeMessage         = `Do you have a suggestion on how to improve the site? Write it here!`
-	submitSuccessMessage = "Your suggestion has been submitted. Thank you for your feedback!"
 	submitFailureMessage = "Something broke! :'( Our developers were notified."
 
 	userUploadQuota     = 200 << 20 // 200 MB
@@ -389,12 +388,7 @@ func (app *App) handleSubmit(badInputURL, loginURL, successURL string) http.Hand
 }
 
 func (app *App) serveSuccess(w http.ResponseWriter, r *http.Request) {
-	type result struct {
-		Err  error
-		Msg  string
-		Type string
-	}
-	app.render(w, submitTmpl, result{Type: "success", Msg: submitSuccessMessage})
+	app.render(w, successTmpl, nil)
 }
 
 func (app *App) renderTemplate(w http.ResponseWriter, t *template.Template, data interface{}) {
@@ -416,7 +410,7 @@ func (app *App) render(w http.ResponseWriter, t *template.Template, data interfa
 
 var (
 	suggestionTmpl = template.Must(template.New("suggestionTmpl").Parse(baseTemplate + subnavTemplate + suggestionTemplate))
-	submitTmpl     = template.Must(template.New("submitTmpl").Parse(baseTemplate + subnavTemplate + submitTemplate))
+	successTmpl    = template.Must(template.New("successTmpl").Parse(baseTemplate + subnavTemplate + successTemplate))
 	listTmpl       = template.Must(template.New("listTmpl").Parse(baseTemplate + subnavTemplate + toolbarTemplate + listTemplate))
 	loginTmpl      = template.Must(template.New("loginTmpl").Parse(baseTemplate + loginTemplate))
 )
@@ -630,6 +624,7 @@ const (
 			font-size: 0.9em;
 		}
 
+	    {{block "css" .}}{{end}}
 	</style>
 </head>
 <body>
@@ -684,24 +679,17 @@ const (
 </div>
 {{end}}
 `
-	submitTemplate = `
+	successTemplate = `
+{{define "css"}}
+.alert a {
+	font-size: 100%;
+}
+{{end}}
 {{define "content"}}
-{{ if .Data.Err }}
-<!-- Error -->
-<!-- .Data.Err  -->
-<!----------->
-{{end}}
-{{ if .Data.Msg }}
-<div class="alert alert-{{.Data.Type}}">
-	<strong>
-	{{if eq .Data.Type "success"}}
-	Success:
-	{{else}}
-	Error:
-	{{end}}
-	</strong>{{.Data.Msg}}
+<div class="alert alert-success">
+	<strong> Success: </strong> Your suggestion has been submitted. Thank you for your feedback!
+    (<a href="/post/list">Return to main site</a>)
 </div>
-{{end}}
 {{end}}
 `
 	listTemplate = `
