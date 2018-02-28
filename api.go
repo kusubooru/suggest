@@ -52,8 +52,13 @@ func (fn apiHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type shim interface {
+	Autocomplete(q string, limit, offset int) ([]*shimmie.Autocomplete, error)
+	GetPMs(from, to string, choice shimmie.PMChoice) ([]*shimmie.PM, error)
+}
+
 type API struct {
-	Shimmie *shimmie.Shimmie
+	Shimmie shim
 }
 
 type Tag struct {
@@ -80,6 +85,32 @@ func (api *API) handleAutocomplete(w http.ResponseWriter, r *http.Request) error
 
 	if err := json.NewEncoder(w).Encode(tags); err != nil {
 		return E(err, "Could not encode autocomplete response.", http.StatusInternalServerError)
+	}
+	return nil
+}
+
+type ShowUnreadResp struct {
+	User   string
+	Unread int
+}
+
+func (api *API) handleShowUnread(w http.ResponseWriter, r *http.Request) error {
+	usernameCookie, err := r.Cookie("shm_user")
+	if err != nil || usernameCookie.Value == "" {
+		return E(err, "Unknown user.", http.StatusUnauthorized)
+	}
+	username := usernameCookie.Value
+	pms, err := api.Shimmie.GetPMs("", username, shimmie.PMUnread)
+	if err != nil {
+		return E(err, "Retrieving private messages failed.", http.StatusInternalServerError)
+	}
+
+	resp := ShowUnreadResp{
+		User:   username,
+		Unread: len(pms),
+	}
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		return E(err, "Could not encode unread private messages.", http.StatusInternalServerError)
 	}
 	return nil
 }

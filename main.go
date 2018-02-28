@@ -127,6 +127,7 @@ func main() {
 	}
 
 	http.Handle("/suggest/autocomplete", allowCORS(apiHandler(api.handleAutocomplete)))
+	http.Handle("/suggest/show-unread", allowCORS(apiHandler(api.handleShowUnread)))
 
 	if useTLS {
 		if err := http.ListenAndServeTLS(*httpAddr, *certFile, *keyFile, nil); err != nil {
