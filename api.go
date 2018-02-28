@@ -90,8 +90,8 @@ func (api *API) handleAutocomplete(w http.ResponseWriter, r *http.Request) error
 }
 
 type ShowUnreadResp struct {
-	User   string
-	Unread int
+	User   string `json:"user"`
+	Unread int    `json:"unread"`
 }
 
 func (api *API) handleShowUnread(w http.ResponseWriter, r *http.Request) error {
