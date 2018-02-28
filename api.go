@@ -96,6 +96,8 @@ type ShowUnreadResp struct {
 	Unread int    `json:"unread"`
 }
 
+// TODO(jin): Maybe remove fullstops from error messages.
+
 func (api *API) handleShowUnread(w http.ResponseWriter, r *http.Request) error {
 	user, ok := shimmie.FromContextGetUser(r.Context())
 	if !ok || user == nil {
@@ -112,6 +114,7 @@ func (api *API) handleShowUnread(w http.ResponseWriter, r *http.Request) error {
 		User:   username,
 		Unread: len(pms),
 	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		return E(err, "Could not encode unread private messages.", http.StatusInternalServerError)
 	}
