@@ -13,7 +13,7 @@ import (
 
 const testQuota = 10 << 20 // 10 MB
 
-func setup() (teian.SuggestionStore, *os.File) {
+func setup() (*Boltstore, *os.File) {
 	f, err := ioutil.TempFile("", "teian_boltdb_tmpfile_")
 	if err != nil {
 		log.Fatal("could not create boltdb temp file for tests:", err)
@@ -21,7 +21,7 @@ func setup() (teian.SuggestionStore, *os.File) {
 	return NewSuggestionStore(f.Name(), testQuota), f
 }
 
-func teardown(store teian.SuggestionStore, tmpfile *os.File) {
+func teardown(store *Boltstore, tmpfile *os.File) {
 	store.Close()
 	if err := os.Remove(tmpfile.Name()); err != nil {
 		log.Println("could not remove boltdb temp file:", err)

@@ -42,7 +42,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Wrong username or password.", http.StatusUnauthorized)
 			return
 		}
-		app.Errorf(w, http.StatusInternalServerError, err, "get user %q failed: %v", username)
+		app.Errorf(w, http.StatusInternalServerError, err, "get user %q failed: %v", username, err)
 		return
 	}
 	passwordHash := shimmie.PasswordHash(username, password)
