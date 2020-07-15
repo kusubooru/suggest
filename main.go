@@ -140,6 +140,10 @@ func main() {
 	}
 }
 
+func newDefaultLogger() *log.Logger {
+	return log.New(os.Stderr, "", log.Ldate|log.Ltime|log.LUTC)
+}
+
 func closeStoreOnSignal(s *boltstore.Boltstore) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, os.Kill)
@@ -164,9 +168,15 @@ func mkDirIfNotExist(name string, perm os.FileMode) error {
 	return nil
 }
 
+// logger is the interface for logging messages.
+type logger interface {
+	// Printf writes a formated message to the log.
+	Printf(format string, v ...interface{})
+}
+
 // App represents the Teian application and holds its dependencies.
 type App struct {
-	Log         Logger
+	Log         logger
 	Suggestions teian.SuggestionStore
 	Conf        teian.Conf
 	Shimmie     *shimmie.Shimmie
@@ -352,7 +362,7 @@ func (app *App) Errorf(w http.ResponseWriter, code int, err error, format string
 	msg := fmt.Sprintf(format, a...)
 	if code == http.StatusInternalServerError {
 		s := fmt.Sprintf("%d %s: %v", code, msg, err)
-		app.Log.Println(s)
+		app.Log.Printf("%s", s)
 	}
 	http.Error(w, msg, code)
 }

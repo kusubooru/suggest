@@ -82,7 +82,7 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 	remain, err := app.Suggestions.CheckQuota(username, teian.Quota(n))
 	if err != nil {
 		if rerr := os.Remove(f.Name()); rerr != nil {
-			app.Log.Println("file cleanup failed:", rerr)
+			app.Log.Printf("file cleanup failed: %v", rerr)
 		}
 		if err == teian.ErrOverQuota {
 			http.Error(w, "quota exceeded", http.StatusForbidden)
@@ -92,11 +92,11 @@ func (app *App) handleUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go sendMail(username, f.Name(), n, int64(remain), app.Log)
+	go app.sendMail(username, f.Name(), n, int64(remain))
 	fmt.Fprintf(w, "%v", remain)
 }
 
-func sendMail(username, file string, uploaded, remain int64, logger Logger) {
+func (app *App) sendMail(username, file string, uploaded, remain int64) {
 	path, err := filepath.Abs(file)
 	if err != nil {
 		path = file
@@ -110,6 +110,6 @@ func sendMail(username, file string, uploaded, remain int64, logger Logger) {
 	}
 	err = teian.SendMail(mail)
 	if err != nil {
-		logger.Println(err)
+		app.Log.Printf("sending email: %v", err)
 	}
 }
